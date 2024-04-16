@@ -38,7 +38,7 @@ This script automates the installation process of Arch Linux with Logical Volume
      ```
 
 5. **Run the Script**:
-   - Run the script. You shouldn't need to make the script executable, but if you do, run `chmod +x setup.sh`.
+   - Run the script. You shouldn't need to make the script executable, but if you need to, run `chmod +x setup.sh`.
      ```
      ./ArchLinux-lvm_tui/setup.sh
      # Or if you've entered the directory
