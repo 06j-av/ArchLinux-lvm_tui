@@ -47,6 +47,15 @@ partconfig() {
 	main
 }
 
+kernelconfig() {
+	linuxkernel=$(whiptail --title "Select a kernel" --menu "Choose the kernel that you want to install." 20 60 4 3>&1 1>&2 2>&3 \
+ 	"linux" "The vanilla Linux kernel and modules" \
+  	"linux-hardened" "A security-focused Linux kernel" \
+   	"linux-lts" "Long-term (LTS) Linux kernel" \
+      	"linux-zen" "Made by kernel hackers for the best kernel possible")
+       	kernelmenu="$linuxkernel"
+}
+
 userconfig() {
 	username=$(whiptail --title "Username & password" --nocancel --inputbox "Enter a username:" 0 0 3>&1 1>&2 2>&3)
 	userpasswd=$(whiptail --passwordbox "Enter the password for $username:" 8 78 --title "Username & password" 3>&1 1>&2 2>&3)
@@ -94,7 +103,7 @@ hwconfig() {
 	gputype=$(whiptail --title "Hardware" --radiolist "What's your GPU?" 0 0 4 \
 		"NVIDIA" "NVIDIA with nvidia package" ON \
 		"NVIDIA (open)" "NVIDIA with nvidia-open package" OFF \
-		"Other" "Not NVIDIA with mesa package" OFF)
+		"Other" "Other GPU using the mesa package" OFF)
 	hardwaremenu="CPU: $cpumake; GPU: $gputype"
 	main
 }
@@ -167,7 +176,7 @@ main() {
         partconfig
         ;;
 	2)
-		#kernelconfig
+		kernelconfig
 		;;
     3)
         userconfig
