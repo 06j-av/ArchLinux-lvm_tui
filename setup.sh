@@ -195,44 +195,52 @@ installArch() {
 	sleep 3
 	if [[ $eraseefi -eq 0 ]]; then
 		whiptail --title "Partitioning & LVM setup" --infobox "Formatting the EFI System partition..." 8 35
-		#mkfs.fat -F 32 $efipart > /dev/null
+		mkfs.fat -F 32 $efipart > /dev/null
 	else
 		whiptail --title "Partitioning & LVM setup" --infobox "The ESP has been untouched." 8 35
 		sleep 2
 	fi
 	whiptail --title "Partitioning & LVM setup" --infobox "Creating physical volume $rootpart..." 8 35
-	#pvcreate $rootpart > /dev/null
+	pvcreate $rootpart > /dev/null
 	sleep 1
+ 
 	whiptail --title "Partitioning & LVM setup" --infobox "Creating volume group $vgname..." 8 35
-	#vgcreate $vgname $rootpart > /dev/null
+	vgcreate $vgname $rootpart > /dev/null
 	sleep 1
+ 
 	whiptail --title "Partitioning & LVM setup" --infobox "Creating logical volume $lvname" 8 35
-	#lvcreate -l 100%FREE $vgname -n $lvname > /dev/null
+	lvcreate -l 100%FREE $vgname -n $lvname > /dev/null
 	sleep 1
+ 
 	whiptail --title "Partitioning & LVM setup" --infobox "Finishing LVM setup..." 8 35
-	#modprobe dm_mod
+	modprobe dm_mod
 	sleep 1
-	#vgchange -ay > /dev/null
+	vgchange -ay > /dev/null
 	sleep 1
 	lvmpath=/dev/$vgname/$lvname
+ 
 	whiptail --title "Partitioning & LVM setup" --infobox "Formatting $lvmpath..." 8 35
-	#mkfs.ext4 $lvmpath > /dev/null
+	mkfs.ext4 $lvmpath > /dev/null
 	sleep 1
+ 
 	whiptail --title "Partitioning & LVM setup" --infobox "Mounting the file systems..." 8 35
-	#mount $lvmpath /mnt
-	#mount --mkdir $efipart /mnt/boot/efi
+	mount $lvmpath /mnt
+	mount --mkdir $efipart /mnt/boot/efi
 	sleep 1
+ 
 	whiptail --title "Getting things ready..." --infobox "Building fstab file..." 8 35
-	#mkdir /mnt/etc
-	#genfstab -U /mnt >> /mnt/etc/fstab
+	mkdir /mnt/etc
+	genfstab -U /mnt >> /mnt/etc/fstab
 	sleep 1
+ 
 	whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
-	#pacstrap /mnt base libnewt --noconfirm --needed > /dev/null
+	pacstrap /mnt base libnewt --noconfirm --needed > /dev/null
 	sleep 1
+ 
 	whiptail --title "Getting things ready..." --infobox "Doing some other stuff..." 8 35
-	#mkdir /mnt/install
-	#echo $locale > /mnt/install/lang
-	#language=$(cat /mnt/install/lang | awk '{print $1}')
+	mkdir /mnt/install
+	echo $locale > /mnt/install/lang
+	language=$(cat /mnt/install/lang | awk '{print $1}')
 	sleep 1
 
 	cat <<INSTALL > /mnt/install/install.sh
