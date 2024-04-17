@@ -191,165 +191,161 @@ desktopconfig() {
 }
 
 installArch() {
-	whiptail --title "Installing Arch Linux..." --infobox "Here we go!" 8 35
-	sleep 3
-	if [[ $eraseefi -eq 0 ]]; then
-		whiptail --title "Partitioning & LVM setup" --infobox "Formatting the EFI System partition..." 8 35
-		mkfs.fat -F 32 $efipart > /dev/null
-	else
-		whiptail --title "Partitioning & LVM setup" --infobox "The ESP has been untouched." 8 35
-		sleep 2
-	fi
-	whiptail --title "Partitioning & LVM setup" --infobox "Creating physical volume $rootpart..." 8 35
-	pvcreate $rootpart > /dev/null
-	sleep 1
- 
-	whiptail --title "Partitioning & LVM setup" --infobox "Creating volume group $vgname..." 8 35
-	vgcreate $vgname $rootpart > /dev/null
-	sleep 1
- 
-	whiptail --title "Partitioning & LVM setup" --infobox "Creating logical volume $lvname" 8 35
-	lvcreate -l 100%FREE $vgname -n $lvname > /dev/null
-	sleep 1
- 
-	whiptail --title "Partitioning & LVM setup" --infobox "Finishing LVM setup..." 8 35
-	modprobe dm_mod
-	sleep 1
-	vgchange -ay > /dev/null
-	sleep 1
-	lvmpath=/dev/$vgname/$lvname
- 
-	whiptail --title "Partitioning & LVM setup" --infobox "Formatting $lvmpath..." 8 35
-	mkfs.ext4 $lvmpath > /dev/null
-	sleep 1
- 
-	whiptail --title "Partitioning & LVM setup" --infobox "Mounting the file systems..." 8 35
-	mount $lvmpath /mnt
-	mount --mkdir $efipart /mnt/boot/efi
-	sleep 1
- 
-	whiptail --title "Getting things ready..." --infobox "Building fstab file..." 8 35
-	mkdir /mnt/etc
-	genfstab -U /mnt >> /mnt/etc/fstab
-	sleep 1
- 
-	whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
-	pacstrap /mnt base libnewt --noconfirm --needed > /dev/null
-	sleep 1
- 
-	whiptail --title "Getting things ready..." --infobox "Doing some other stuff..." 8 35
-	mkdir /mnt/install
-	echo $locale > /mnt/install/lang
-	language=$(cat /mnt/install/lang | awk '{print $1}')
-	sleep 1
+whiptail --title "Installing Arch Linux..." --infobox "Here we go!" 8 35
+sleep 3
+if [[ $eraseefi -eq 0 ]]; then
+	whiptail --title "Partitioning & LVM setup" --infobox "Formatting the EFI System partition..." 8 35
+	mkfs.fat -F 32 $efipart > /dev/null
+else
+	whiptail --title "Partitioning & LVM setup" --infobox "The ESP has been untouched." 8 35
+	sleep 2
+fi
+whiptail --title "Partitioning & LVM setup" --infobox "Creating physical volume $rootpart..." 8 35
+pvcreate $rootpart > /dev/null
+sleep 1
 
+whiptail --title "Partitioning & LVM setup" --infobox "Creating volume group $vgname..." 8 35
+vgcreate $vgname $rootpart > /dev/null
+sleep 1
+
+whiptail --title "Partitioning & LVM setup" --infobox "Creating logical volume $lvname" 8 35
+lvcreate -l 100%FREE $vgname -n $lvname > /dev/null
+sleep 1
+
+whiptail --title "Partitioning & LVM setup" --infobox "Finishing LVM setup..." 8 35
+modprobe dm_mod
+sleep 1
+vgchange -ay > /dev/null
+sleep 1
+lvmpath=/dev/$vgname/$lvname
+
+whiptail --title "Partitioning & LVM setup" --infobox "Formatting $lvmpath..." 8 35
+mkfs.ext4 $lvmpath > /dev/null
+sleep 1
+
+whiptail --title "Partitioning & LVM setup" --infobox "Mounting the file systems..." 8 35
+mount $lvmpath /mnt
+mount --mkdir $efipart /mnt/boot/efi
+sleep 1
+
+whiptail --title "Getting things ready..." --infobox "Building fstab file..." 8 35
+mkdir /mnt/etc
+genfstab -U /mnt >> /mnt/etc/fstab
+sleep 1
+
+whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
+pacstrap /mnt base libnewt --noconfirm --needed > /dev/null
+sleep 1
+
+whiptail --title "Getting things ready..." --infobox "Doing some other stuff..." 8 35
+mkdir /mnt/install
+echo $locale > /mnt/install/lang
+language=$(cat /mnt/install/lang | awk '{print $1}')
+sleep 1
 	cat <<INSTALL > /mnt/install/install.sh
-	whiptail --title "Installing Arch Linux..." --infobox "Installing the Linux kernel and other tools..." 8 35
-	pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl dialog bluez bluez-utils --noconfirm --needed > /dev/null
+whiptail --title "Installing Arch Linux..." --infobox "Installing the Linux kernel and other tools..." 8 35
+pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl ialog bluez bluez-utils --noconfirm --needed > /dev/null 2> /dev/null
+whiptail --title "Installing Arch Linux..." --infobox "Enabling Network Manager..." 8 35
+systemctl enable NetworkManager > /dev/null
+sleep 1
+whiptail --title "Installing Arch Linux..." --infobox "Configuring the Linux initcpio..." 8 35
+cp -f /install/mkinit.conf /etc/mkinitcpio.conf > /dev/null
+mkinitcpio -P > /dev/null
+sleep 1
 
-	whiptail --title "Installing Arch Linux..." --infobox "Enabling Network Manager..." 8 35
-	systemctl enable NetworkManager > /dev/null
-	sleep 1
+whiptail --title "Installing Arch Linux..." --infobox "Setting the locale..." 8 35
+sed -i 's/#$locale/$locale/' /etc/locale.gen
+locale-gen > /dev/null
+echo 'LANG=$language' > /etc/locale.conf
+sleep 1
 
-	whiptail --title "Installing Arch Linux..." --infobox "Configuring the Linux initcpio..." 8 35
-	cp -f /install/mkinit.conf /etc/mkinitcpio.conf > /dev/null
+whiptail --title "Installing Arch Linux..." --infobox "Configuring users..." 8 35
+useradd -m -g users -G wheel $username
+sleep 1
+
+whiptail --title "Installing Arch Linux..." --infobox "Setting passwords..." 8 35
+echo '$userpasswd' | passwd --stdin $username
+echo '$rootpasswd' | passwd --stdin root
+sleep 1
+
+whiptail --title "Installing Arch Linux..." --infobox "Configuring sudoers..." 8 35
+sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+sleep 1
+whiptail --title "Installing Arch Linux..." --infobox "Installing and configuring GRUB..." 8 35
+pacman -S grub dosfstools os-prober mtools efibootmgr --noconfirm --needed > /dev/null
+grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck > /dev/null
+if [ -d /boot/grub/locale ]; then
+	cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
+	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
+	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
+else
+	mkdir /boot/grub/locale
+	cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
+	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
+	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
+fi
+sleep 1
+
+if [[ "$swapspace" != "N/A" ]]; then
+	whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
+	mkswap -U clear --size $swapspace --file /swapfile
+	swapon /swapfile
+	echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
+	mount -a
+	swapon -a
+fi
+sleep 1
+
+whiptail --title "Installing Arch Linux..." --infobox "Setting the hostname..." 8 35
+echo "$nameofhost" > /etc/hostname
+echo -e "127.0.0.1	localhost\n127.0.1.1	$nameofhost" > /etc/hosts
+sleep 1
+
+whiptail --title "Installing Arch Linux..." --infobox "Setting the timezone..." 8 35
+ln -sf /usr/share/zoneinfo/$timezone /etc/localtime > /dev/null
+hwclock --systohc > /dev/null
+systemctl enable systemd-timesyncd > /dev/null
+sleep 1
+
+whiptail --title "Installing Arch Linux..." --infobox "Enabling the multilib repository..." 8 35
+echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
+pacman -Sy > /dev/null
+sleep 1
+
+if [[ $gputype -eq 0 ]]; then
+	whiptail --title "Installing Arch Linux..." --infobox "Installing NVIDIA drivers..." 8 35
+	pacman -S $gpupkg nvidia-utils --noconfirm --needed > /dev/null
+	mkdir /etc/pacman.d/hooks
+	cp /install/$gpupkg.hook /etc/pacman.d/hooks/
+	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"/' /etc/default/grub
+	cp
 	mkinitcpio -P > /dev/null
-	sleep 1
+	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
+else
+	whiptail --title "Installing Arch Linux..." --infobox "Installing the 'mesa' GPU driver..." 8 35
+	pacman -S mesa --noconfirm --needed > /dev/null
+fi
 
-	whiptail --title "Installing Arch Linux..." --infobox "Setting the locale..." 8 35
-	sed -i 's/#$locale/$locale/' /etc/locale.gen
-	locale-gen > /dev/null
-	echo 'LANG=$language' > /etc/locale.conf
-	sleep 1
+whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
+pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/null
 
-	whiptail --title "Installing Arch Linux..." --infobox "Configuring users..." 8 35
-	useradd -m -g users -G wheel $username
-	sleep 1
-
-	whiptail --title "Installing Arch Linux..." --infobox "Setting passwords..." 8 35
-	echo '$userpasswd' | passwd --stdin $username
-	echo '$rootpasswd' | passwd --stdin root
-	sleep 1
-
-	whiptail --title "Installing Arch Linux..." --infobox "Configuring sudoers..." 8 35
-	sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
-	sleep 1
-
-	whiptail --title "Installing Arch Linux..." --infobox "Installing and configuring GRUB..." 8 35
-	pacman -S grub dosfstools os-prober mtools efibootmgr --noconfirm --needed > /dev/null
-	grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck > /dev/null
-	if [ -d /boot/grub/locale ]; then
-		cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
-		sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-		grub-mkconfig -o /boot/grub/grub.cfg
-	else
-		mkdir /boot/grub/locale
-		cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
-		sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-		grub-mkconfig -o /boot/grub/grub.cfg
-	fi
-	sleep 1
-
-	if [[ "$swapspace" != "N/A" ]]
-		whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
-		mkswap -U clear --size $swapspace --file /swapfile
-		swapon /swapfile
-		echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
-		mount -a
-		swapon -a
-	fi
-	sleep 1
-
-	whiptail --title "Installing Arch Linux..." --infobox "Setting the hostname..." 8 35
-	echo "$nameofhost" > /etc/hostname
-	echo -e "127.0.0.1	localhost\n127.0.1.1	$nameofhost" > /etc/hosts
-	sleep 1
-
-	whiptail --title "Installing Arch Linux..." --infobox "Setting the timezone..." 8 35
-	ln -sf /usr/share/zoneinfo/$timezone /etc/localtime > /dev/null
-	hwclock --systohc > /dev/null
-	systemctl enable systemd-timesyncd > /dev/null
-	sleep 1
-
-	whiptail --title "Installing Arch Linux..." --infobox "Enabling the multilib repository..." 8 35
-	echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
-	pacman -Sy > /dev/null
-	sleep 1
-
-	if [[ $gputype -eq 0 ]]; then
-		whiptail --title "Installing Arch Linux..." --infobox "Installing NVIDIA drivers..." 8 35
-		pacman -S $gpupkg nvidia-utils --noconfirm --needed > /dev/null
-		mkdir /etc/pacman.d/hooks
-		cp /install/$gpupkg.hook /etc/pacman.d/hooks/
-		sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"/' /etc/default/grub
-		cp
-		mkinitcpio -P > /dev/null
-		grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
-	else
-		whiptail --title "Installing Arch Linux..." --infobox "Installing the 'mesa' GPU driver..." 8 35
-		pacman -S mesa --noconfirm --needed > /dev/null
-	fi
-
+if [[ "$desktop" != "No DE" && "$displaymgr" != "No DM" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
-	pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/null
+	pacman -S xorg $desktop $displaymgr alacritty --noconfirm --needed > /dev/null
+	systemctl enable $displaymgr
+elif [[ "$desktop" != "No DE" && "$displaymgr" = "No DM" ]]; then
+	whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
+	pacman -S xorg $desktop alacritty --noconfirm --needed > /dev/null
+fi
 
-	if [[ "$desktop" != "No DE" && "$displaymgr" != "No DM" ]]; then
-		whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
-		pacman -S xorg $desktop $displaymgr alacritty --noconfirm --needed > /dev/null
-		systemctl enable $displaymgr
-	elif [[ "$desktop" != "No DE" && "$displaymgr" = "No DM" ]]; then
-		whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
-		pacman -S xorg $desktop alacritty --noconfirm --needed > /dev/null
-	fi
+whiptail --title "Installing Arch Linux..." --infobox "Blacklisting the PC speaker..." 8 35
+echo -e "blacklist pcspkr\nblacklist snd_pcsp" > /etc/modprobe.d/nobeep.conf
+sleep 1
 
-	whiptail --title "Installing Arch Linux..." --infobox "Blacklisting the PC speaker..." 8 35
-	echo -e "blacklist pcspkr\nblacklist snd_pcsp" > /etc/modprobe.d/nobeep.conf
-	sleep 1
-
-	whiptail --title "Installing Arch Linux..." --infobox "Clearing the pacman cache..." 8 35
-	pacman -Scc --noconfirm > /dev/null
-	rm -f /var/cache/pacman/pkg/*
-	exit
+whiptail --title "Installing Arch Linux..." --infobox "Clearing the pacman cache..." 8 35
+pacman -Scc --noconfirm > /dev/null
+rm -f /var/cache/pacman/pkg/*
+exit
 INSTALL
 
 	cat <<MKINIT > /mnt/install/mkinit.conf
@@ -511,54 +507,54 @@ HOOKS=(base udev autodetect keyboard keymap consolefont modconf block lvm2 files
 MKINITNVIDIA
 
 	cat <<NVIDIAHOOK > /mnt/install/nvidia.hook
-	[Trigger]
-	Operation=Install
-	Operation=Upgrade
-	Operation=Remove
-	Type=Package
-	Target=nvidia
-	Target=linux
+[Trigger]
+Operation=Install
+Operation=Upgrade
+Operation=Remove
+Type=Package
+Target=nvidia
+Target=linux
 
-	[Action]
-	Description=Update NVIDIA module in initcpio
-	Depends=mkinitcpio
-	When=PostTransaction
-	NeedsTargets
-	Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+[Action]
+Description=Update NVIDIA module in initcpio
+Depends=mkinitcpio
+When=PostTransaction
+NeedsTargets
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
 NVIDIAHOOK
 
 	cat <<NVIDIALTSHOOK > /mnt/install/nvidia-lts.hook
-	[Trigger]
-	Operation=Install
-	Operation=Upgrade
-	Operation=Remove
-	Type=Package
-	Target=nvidia-lts
-	Target=linux-lts
+[Trigger]
+Operation=Install
+Operation=Upgrade
+Operation=Remove
+Type=Package
+Target=nvidia-lts
+Target=linux-lts
 
-	[Action]
-	Description=Update NVIDIA module in initcpio
-	Depends=mkinitcpio
-	When=PostTransaction
-	NeedsTargets
-	Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+[Action]
+Description=Update NVIDIA module in initcpio
+Depends=mkinitcpio
+When=PostTransaction
+NeedsTargets
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
 NVIDIALTSHOOK
 
 	cat <<NVIDIAOPENHOOK > /mnt/install/nvidia-open.hook
-	[Trigger]
-	Operation=Install
-	Operation=Upgrade
-	Operation=Remove
-	Type=Package
-	Target=nvidia-open
-	Target=linux
+[Trigger]
+Operation=Install
+Operation=Upgrade
+Operation=Remove
+Type=Package
+Target=nvidia-open
+Target=linux
 
-	[Action]
-	Description=Update NVIDIA module in initcpio
-	Depends=mkinitcpio
-	When=PostTransaction
-	NeedsTargets
-	Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+[Action]
+Description=Update NVIDIA module in initcpio
+Depends=mkinitcpio
+When=PostTransaction
+NeedsTargets
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
 NVIDIAOPENHOOK
 
 	#arch-chroot /mnt /bin/bash install/install.sh
@@ -641,6 +637,7 @@ main() {
         desktopconfig
         ;;
     9)
+		check
         ;;
     *)
         exit 0
@@ -649,11 +646,10 @@ esac
 }
 
 main
-check
 rebootconfirm=$(whiptail --title "Chroot or reboot?" --yesno "Installation is COMPLETE.\n\nWould you like to chroot into your installation to do\nsome extra configurations\n\norreboot to your new installation?" --defaultno --yes-button "Chroot" --no-button "Reboot" 0 0 3>&1 1>&2 2>&3; echo $?)
 if [[ $rebootconfirm -eq 0 ]]; then
 	echo "Chrooting..."
-	#arch-chroot /mnt
+	arch-chroot /mnt
 else
 	{
     for ((i = 0 ; i <= 100 ; i+=5)); do
@@ -661,7 +657,7 @@ else
         echo $i
     done
 	} | whiptail --gauge "Rebooting in a couple moments..." 6 50 0
-	#umount -R /mnt
-	#reboot
+	umount -R /mnt
+	reboot
 fi
 clear
