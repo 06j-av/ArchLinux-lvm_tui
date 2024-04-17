@@ -234,7 +234,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 sleep 1
 
 whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
-pacstrap /mnt base libnewt --noconfirm --needed > /dev/null
+pacstrap /mnt base libnewt --noconfirm --needed > /dev/null 2> /dev/null
 sleep 1
 
 whiptail --title "Getting things ready..." --infobox "Doing some other stuff..." 8 35
@@ -277,18 +277,18 @@ grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck > /dev/null
 if [ -d /boot/grub/locale ]; then
 	cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
+	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2> /dev/null
 else
 	mkdir /boot/grub/locale
 	cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
+	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2> /dev/null
 fi
 sleep 1
 
 if [[ "$swapspace" != "N/A" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
-	mkswap -U clear --size $swapspace --file /swapfile
+	mkswap -U clear --size $swapspace --file /swapfile > /dev/null
 	swapon /swapfile
 	echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
 	mount -a
@@ -319,8 +319,8 @@ if [[ $gputype -eq 0 ]]; then
 	cp /install/$gpupkg.hook /etc/pacman.d/hooks/
 	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"/' /etc/default/grub
 	cp
-	mkinitcpio -P > /dev/null
-	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
+	mkinitcpio -P > /dev/null 2> /dev/null
+	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2> /dev/null
 else
 	whiptail --title "Installing Arch Linux..." --infobox "Installing the 'mesa' GPU driver..." 8 35
 	pacman -S mesa --noconfirm --needed > /dev/null
@@ -557,7 +557,7 @@ NeedsTargets
 Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
 NVIDIAOPENHOOK
 
-	#arch-chroot /mnt /bin/bash install/install.sh
+	arch-chroot /mnt /bin/bash install/install.sh
 
 }
 
