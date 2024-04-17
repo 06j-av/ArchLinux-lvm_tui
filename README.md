@@ -4,6 +4,7 @@ This script automates the installation process of Arch Linux with Logical Volume
 
 ## Some stuff you need to know
 - This script will only make one user, so for now you can add users with `useradd` when you boot into your installation.
+- This script will only have options for kernel (`linux` and `linux-lts`), and installs `alacritty` as the default terminal emulator.
 
 ## Things you'll need
 
