@@ -191,36 +191,42 @@ desktopconfig() {
 }
 
 installArch() {
+{
+    for ((i = 0 ; i <= 100 ; i+=5)); do
+        sleep 0.05
+        echo $i
+    done
+	} | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by entering Alt+F2 (tty2 console)." 6 50 0
 whiptail --title "Installing Arch Linux..." --infobox "Here we go!" 8 35
 sleep 3
 if [[ $eraseefi -eq 0 ]]; then
 	whiptail --title "Partitioning & LVM setup" --infobox "Formatting the EFI System partition..." 8 35
-	mkfs.fat -F 32 $efipart > /dev/null
+	mkfs.fat -F 32 $efipart > /dev/tty2 2>&1
 else
 	whiptail --title "Partitioning & LVM setup" --infobox "The ESP has been untouched." 8 35
 	sleep 2
 fi
 whiptail --title "Partitioning & LVM setup" --infobox "Creating physical volume $rootpart..." 8 35
-pvcreate $rootpart > /dev/null
+pvcreate $rootpart > /dev/tty2 2>&1
 sleep 1
 
 whiptail --title "Partitioning & LVM setup" --infobox "Creating volume group $vgname..." 8 35
-vgcreate $vgname $rootpart > /dev/null
+vgcreate $vgname $rootpart > /dev/tty2 2>&1
 sleep 1
 
 whiptail --title "Partitioning & LVM setup" --infobox "Creating logical volume $lvname" 8 35
-lvcreate -l 100%FREE $vgname -n $lvname > /dev/null
+lvcreate -l 100%FREE $vgname -n $lvname > /dev/tty2 2>&1
 sleep 1
 
 whiptail --title "Partitioning & LVM setup" --infobox "Finishing LVM setup..." 8 35
 modprobe dm_mod
 sleep 1
-vgchange -ay > /dev/null
+vgchange -ay > /dev/tty2 2>&1
 sleep 1
 lvmpath=/dev/$vgname/$lvname
 
 whiptail --title "Partitioning & LVM setup" --infobox "Formatting $lvmpath..." 8 35
-mkfs.ext4 $lvmpath > /dev/null 2> /dev/null
+mkfs.ext4 $lvmpath > /dev/tty2 2>&1
 sleep 1
 
 whiptail --title "Partitioning & LVM setup" --infobox "Mounting the file systems..." 8 35
@@ -234,7 +240,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 sleep 1
 
 whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
-pacstrap /mnt base libnewt --noconfirm --needed > /dev/null 2>&1
+pacstrap /mnt base libnewt --noconfirm --needed > /dev/tty2 2>&1
 sleep 1
 
 whiptail --title "Getting things ready..." --infobox "Doing some other stuff..." 8 35
@@ -244,18 +250,18 @@ language=$(cat /mnt/install/lang | awk '{print $1}')
 sleep 1
 	cat <<INSTALL > /mnt/install/install.sh
 whiptail --title "Installing Arch Linux..." --infobox "Installing the Linux kernel and other tools..." 8 35
-pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl dialog bluez bluez-utils --noconfirm --needed > /dev/null 2>&1
+pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl dialog bluez bluez-utils --noconfirm --needed > /dev/tty2 2>&1
 whiptail --title "Installing Arch Linux..." --infobox "Enabling Network Manager..." 8 35
-systemctl enable NetworkManager > /dev/null
+systemctl enable NetworkManager > /dev/tty2
 sleep 1
 whiptail --title "Installing Arch Linux..." --infobox "Configuring the Linux initcpio..." 8 35
 cp -f /install/mkinit.conf /etc/mkinitcpio.conf
-mkinitcpio -p $linuxkernel > /dev/null 2>&1
+mkinitcpio -p $linuxkernel > /dev/tty2 2>&1
 sleep 1
 
 whiptail --title "Installing Arch Linux..." --infobox "Setting the locale..." 8 35
 sed -i 's/#$locale/$locale/' /etc/locale.gen
-locale-gen > /dev/null
+locale-gen > /dev/tty2
 echo 'LANG=$language' > /etc/locale.conf
 sleep 1
 
@@ -272,23 +278,23 @@ whiptail --title "Installing Arch Linux..." --infobox "Configuring sudoers..." 8
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 sleep 1
 whiptail --title "Installing Arch Linux..." --infobox "Installing and configuring GRUB..." 8 35
-pacman -S grub dosfstools os-prober mtools efibootmgr --noconfirm --needed > /dev/null 2>&1
-grub-install --target=x86_64-efi --bootloader-id=arch_grub --recheck > /dev/null
+pacman -S grub dosfstools os-prober mtools efibootmgr --noconfirm --needed > /dev/tty2 2>&1
+grub-install --target=x86_64-efi --bootloader-id=arch_grub --recheck > /dev/tty2
 if [ -d /boot/grub/locale ]; then
 	cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-	grub-mkconfig --output=/boot/grub/grub.cfg > /dev/null 2>&1
+	grub-mkconfig --output=/boot/grub/grub.cfg > /dev/tty2 2>&1
 else
 	mkdir /boot/grub/locale
 	cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-	grub-mkconfig --output=/boot/grub/grub.cfg > /dev/null 2>&1
+	grub-mkconfig --output=/boot/grub/grub.cfg > /dev/tty2 2>&1
 fi
 sleep 1
 
 if [[ "$swapspace" != "N/A" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
-	mkswap -U clear --size $swapspace --file /swapfile > /dev/null
+	mkswap -U clear --size $swapspace --file /swapfile > /dev/tty2
 	swapon /swapfile
 	echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
 	mount -a
@@ -302,40 +308,40 @@ echo -e "127.0.0.1	localhost\n127.0.1.1	$nameofhost" > /etc/hosts
 sleep 1
 
 whiptail --title "Installing Arch Linux..." --infobox "Setting the timezone..." 8 35
-ln -sf /usr/share/zoneinfo/$timezone /etc/localtime > /dev/null
-hwclock --systohc > /dev/null
-systemctl enable systemd-timesyncd > /dev/null
+ln -sf /usr/share/zoneinfo/$timezone /etc/localtime > /dev/tty2
+hwclock --systohc > /dev/tty2
+systemctl enable systemd-timesyncd > /dev/tty2
 sleep 1
 
 whiptail --title "Installing Arch Linux..." --infobox "Enabling the multilib repository..." 8 35
 echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
-pacman -Sy > /dev/null
+pacman -Sy > /dev/tty2
 sleep 1
 
 if [[ $gputype -eq 0 ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Installing NVIDIA drivers..." 8 35
-	pacman -S $gpupkg nvidia-utils --noconfirm --needed > /dev/null
+	pacman -S $gpupkg nvidia-utils --noconfirm --needed > /dev/tty2
 	mkdir /etc/pacman.d/hooks
 	cp /install/$gpupkg.hook /etc/pacman.d/hooks/
 	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"/' /etc/default/grub
 	cp
-	mkinitcpio -p $linuxkernel > /dev/null 2>&1
-	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
+	mkinitcpio -p $linuxkernel > /dev/tty2 2>&1
+	grub-mkconfig -o /boot/grub/grub.cfg > /dev/tty2 2>&1
 else
 	whiptail --title "Installing Arch Linux..." --infobox "Installing the 'mesa' GPU driver..." 8 35
-	pacman -S mesa --noconfirm --needed > /dev/null 2>&1
+	pacman -S mesa --noconfirm --needed > /dev/tty2 2>&1
 fi
 
 whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
-pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/null
+pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/tty2
 
 if [[ "$desktop" != "No DE" && "$displaymgr" != "No DM" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Installing $desktop with $displaymgr..." 8 35
-	pacman -S xorg $desktop $displaymgr alacritty --noconfirm --needed > /dev/null
+	pacman -S xorg $desktop $displaymgr alacritty --noconfirm --needed > /dev/tty2
 	systemctl enable $displaymgr
 elif [[ "$desktop" != "No DE" && "$displaymgr" = "No DM" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
-	pacman -S xorg $desktop alacritty --noconfirm --needed > /dev/null
+	pacman -S xorg $desktop alacritty --noconfirm --needed > /dev/tty2
 fi
 
 whiptail --title "Installing Arch Linux..." --infobox "Blacklisting the PC speaker..." 8 35
@@ -343,7 +349,7 @@ echo -e "blacklist pcspkr\nblacklist snd_pcsp" > /etc/modprobe.d/nobeep.conf
 sleep 1
 
 whiptail --title "Installing Arch Linux..." --infobox "Clearing the pacman cache..." 8 35
-pacman -Scc --noconfirm > /dev/null
+pacman -Scc --noconfirm > /dev/tty2
 rm -f /var/cache/pacman/pkg/*
 exit
 INSTALL
