@@ -220,7 +220,7 @@ sleep 1
 lvmpath=/dev/$vgname/$lvname
 
 whiptail --title "Partitioning & LVM setup" --infobox "Formatting $lvmpath..." 8 35
-mkfs.ext4 $lvmpath > /dev/null
+mkfs.ext4 $lvmpath > /dev/null 2> /dev/null
 sleep 1
 
 whiptail --title "Partitioning & LVM setup" --infobox "Mounting the file systems..." 8 35
@@ -234,7 +234,7 @@ genfstab -U /mnt >> /mnt/etc/fstab
 sleep 1
 
 whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
-pacstrap /mnt base libnewt --noconfirm --needed > /dev/null 2> /dev/null
+pacstrap /mnt base libnewt --noconfirm --needed > /dev/null 2>&1
 sleep 1
 
 whiptail --title "Getting things ready..." --infobox "Doing some other stuff..." 8 35
@@ -244,13 +244,13 @@ language=$(cat /mnt/install/lang | awk '{print $1}')
 sleep 1
 	cat <<INSTALL > /mnt/install/install.sh
 whiptail --title "Installing Arch Linux..." --infobox "Installing the Linux kernel and other tools..." 8 35
-pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl ialog bluez bluez-utils --noconfirm --needed > /dev/null 2> /dev/null
+pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl dialog bluez bluez-utils --noconfirm --needed > /dev/null 2>&1
 whiptail --title "Installing Arch Linux..." --infobox "Enabling Network Manager..." 8 35
 systemctl enable NetworkManager > /dev/null
 sleep 1
 whiptail --title "Installing Arch Linux..." --infobox "Configuring the Linux initcpio..." 8 35
-cp -f /install/mkinit.conf /etc/mkinitcpio.conf > /dev/null
-mkinitcpio -P > /dev/null
+cp -f /install/mkinit.conf /etc/mkinitcpio.conf
+mkinitcpio -p $linuxkernel > /dev/null 2>&1
 sleep 1
 
 whiptail --title "Installing Arch Linux..." --infobox "Setting the locale..." 8 35
@@ -272,17 +272,17 @@ whiptail --title "Installing Arch Linux..." --infobox "Configuring sudoers..." 8
 sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 sleep 1
 whiptail --title "Installing Arch Linux..." --infobox "Installing and configuring GRUB..." 8 35
-pacman -S grub dosfstools os-prober mtools efibootmgr --noconfirm --needed > /dev/null
-grub-install --target=x86_64-efi --bootloader-id=grub_uefi --recheck > /dev/null
+pacman -S grub dosfstools os-prober mtools efibootmgr --noconfirm --needed > /dev/null 2>&1
+grub-install --target=x86_64-efi --bootloader-id=arch_grub --recheck > /dev/null
 if [ -d /boot/grub/locale ]; then
 	cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2> /dev/null
+	grub-mkconfig --output=/boot/grub/grub.cfg > /dev/null 2>&1
 else
 	mkdir /boot/grub/locale
 	cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
 	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /etc/default/grub
-	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2> /dev/null
+	grub-mkconfig --output=/boot/grub/grub.cfg > /dev/null 2>&1
 fi
 sleep 1
 
@@ -319,18 +319,18 @@ if [[ $gputype -eq 0 ]]; then
 	cp /install/$gpupkg.hook /etc/pacman.d/hooks/
 	sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"/' /etc/default/grub
 	cp
-	mkinitcpio -P > /dev/null 2> /dev/null
-	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2> /dev/null
+	mkinitcpio -p $linuxkernel > /dev/null 2>&1
+	grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
 else
 	whiptail --title "Installing Arch Linux..." --infobox "Installing the 'mesa' GPU driver..." 8 35
-	pacman -S mesa --noconfirm --needed > /dev/null
+	pacman -S mesa --noconfirm --needed > /dev/null 2>&1
 fi
 
 whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
 pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/null
 
 if [[ "$desktop" != "No DE" && "$displaymgr" != "No DM" ]]; then
-	whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
+	whiptail --title "Installing Arch Linux..." --infobox "Installing $desktop with $displaymgr..." 8 35
 	pacman -S xorg $desktop $displaymgr alacritty --noconfirm --needed > /dev/null
 	systemctl enable $displaymgr
 elif [[ "$desktop" != "No DE" && "$displaymgr" = "No DM" ]]; then
