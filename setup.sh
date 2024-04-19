@@ -21,6 +21,7 @@ sleep 1
 internet=$(ping -c 3 archlinux.org >/dev/null 2>&1; echo $?)
 if [ $internet -ne 0 ]; then
     whiptail --title "Error" --msgbox "There's something wrong with your internet connection. Try again later." 2 15
+    exit 1
 fi
 
 welcomeText="Welcome to 06j-av's automated Arch Linux install script.
@@ -35,8 +36,32 @@ partconfig() {
 	# Get a list of partitions using the 'lsblk' command
 	partitions=$(lsblk -no NAME,FSTYPE,SIZE,PARTTYPENAME)
 	efipart=$(whiptail --title "Select partitions..." --nocancel --inputbox "Which of these will be your EFI system partition?\nEnter the path to that partition below.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
+
+	# Check if the ESP is a device file and a "EFI System" partition
+	if [[ -b "$efipart" && "$(lsblk -no TYPE "$efipart")"  == "part" && "$(lsblk -no PARTTYPENAME "$efipart" == "EFI System" )" ]]; then
+		echo "$efipart is a valid ESP."
+	else
+		whiptail --title "Something went wrong" --msgbox "$efipart is not a valid EFI System Partition." 2 15
+		exit 1
+	fi
+
 	eraseefi=$(whiptail --title "Format?" --yesno "Do you want to format $efipart?\n\nIf you are dual booting, we highly suggest NOT formatting the partition." --defaultno --yes-button "Format" --no-button "Don't format" 0 0 3>&1 1>&2 2>&3; echo $?)
+
 	rootpart=$(whiptail --title "Select partitions..." --nocancel --inputbox "You have selected $efipart as your EFI system partition.\n\nWhich of these will be your root partition?\nEnter the path to that partition below.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
+
+	# Check if the ESP is a device file and a "EFI System" partition
+	if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart" == "Linux LVM" )" ]]; then
+		echo "$rootpart is a valid root partition."
+	else
+		whiptail --title "Something went wrong" --msgbox "$rootpart is not a valid root partition." 2 15
+		exit 1
+	fi
+
+	if [[ "$efipart" = "$rootpart" ]]; then
+		whiptail --title "Something went wrong" --msgbox "The ESP and root partition cannot be the same!" 2 15
+		exit 1
+	fi
+
 	vgname=$(whiptail --title "Host configuration" --nocancel --inputbox "Name the volume group:" 0 0 3>&1 1>&2 2>&3)
 	lvname=$(whiptail --title "Host configuration" --nocancel --inputbox "Name the root logical volume:" 0 0 3>&1 1>&2 2>&3)
 	if [[ $eraseefi -eq 0 ]]; then
@@ -183,6 +208,7 @@ desktopconfig() {
 		"lxdm-gtk3" "LXDE display manager with GTK 3" \
 		"No DM" "Don't install a display manager" 3>&1 1>&2 2>&3)
 		demenu="$desktop + $displaymgr"
+
 	else
 		demenu="$desktop"
 	fi
@@ -192,20 +218,23 @@ desktopconfig() {
 
 installArch() {
 {
-    for ((i = 0 ; i <= 100 ; i+=5)); do
+    for ((i = 0 ; i <= 100 ; i+=1)); do
         sleep 0.05
         echo $i
     done
-	} | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by entering Alt+F2 (tty2 console)." 6 50 0
+	} | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by entering Alt+F2 (the tty2 console)." 6 50 0
 whiptail --title "Installing Arch Linux..." --infobox "Here we go!" 8 35
+
 sleep 3
+
 if [[ $eraseefi -eq 0 ]]; then
 	whiptail --title "Partitioning & LVM setup" --infobox "Formatting the EFI System partition..." 8 35
-	mkfs.fat -F 32 $efipart > /dev/tty2 2>&1
+	mkfs.fat -F32 $efipart > /dev/tty2 2>&1
 else
 	whiptail --title "Partitioning & LVM setup" --infobox "The ESP has been untouched." 8 35
 	sleep 2
 fi
+
 whiptail --title "Partitioning & LVM setup" --infobox "Creating physical volume $rootpart..." 8 35
 pvcreate $rootpart > /dev/tty2 2>&1
 sleep 1
@@ -226,7 +255,7 @@ sleep 1
 lvmpath=/dev/$vgname/$lvname
 
 whiptail --title "Partitioning & LVM setup" --infobox "Formatting $lvmpath..." 8 35
-mkfs.ext4 $lvmpath > /dev/tty2 2>&1
+mkfs.ext4 -q $lvmpath
 sleep 1
 
 whiptail --title "Partitioning & LVM setup" --infobox "Mounting the file systems..." 8 35
@@ -248,9 +277,10 @@ mkdir /mnt/install
 echo $locale > /mnt/install/lang
 language=$(cat /mnt/install/lang | awk '{print $1}')
 sleep 1
+
 	cat <<INSTALL > /mnt/install/install.sh
 whiptail --title "Installing Arch Linux..." --infobox "Installing the Linux kernel and other tools..." 8 35
-pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl dialog bluez bluez-utils --noconfirm --needed > /dev/tty2 2>&1
+pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl dialog bluez bluez-utils ntfs-3g --noconfirm --needed > /dev/tty2 2>&1
 whiptail --title "Installing Arch Linux..." --infobox "Enabling Network Manager..." 8 35
 systemctl enable NetworkManager > /dev/tty2
 sleep 1
@@ -318,7 +348,7 @@ echo -e "[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
 pacman -Sy > /dev/tty2
 sleep 1
 
-if [[ $gputype -eq 0 ]]; then
+if [[ $gputype -eq 0 && "$gpupkg" != "mesa" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Installing NVIDIA drivers..." 8 35
 	pacman -S $gpupkg nvidia-utils --noconfirm --needed > /dev/tty2
 	mkdir /etc/pacman.d/hooks
@@ -652,6 +682,7 @@ esac
 }
 
 main
+
 rebootconfirm=$(whiptail --title "Chroot or reboot?" --yesno "Installation is COMPLETE.\n\nWould you like to chroot into your installation to do\nsome extra configurations\n\norreboot to your new installation?" --defaultno --yes-button "Chroot" --no-button "Reboot" 0 0 3>&1 1>&2 2>&3; echo $?)
 if [[ $rebootconfirm -eq 0 ]]; then
 	echo "Chrooting..."
