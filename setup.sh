@@ -388,7 +388,7 @@ pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipew
 
 if [[ "$desktop" != "No DE" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Installing $desktop with $displaymgr..." 8 35
-	pacman -S "${desktop_pkgs[@]}" --noconfirm --needed > /dev/tty2 2>&1
+	pacman -S ${desktop_pkgs[@]} --noconfirm --needed > /dev/tty2 2>&1
 	if [[ "$displaymgr" = "xorg-xinit" ]]; then
 		systemctl enable $displaymgr
 	fi
