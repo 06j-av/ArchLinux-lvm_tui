@@ -188,8 +188,7 @@ desktopconfig() {
 	"budgie" "Install the Budgie desktop environment" \
 	"cinnamon" "Install the Cinnamon desktop environment" \
 	"gnome" "Install the GNOME desktop environment" \
-	"lxde" "Install the LXDE (with GTK 2) desktop environment" \
-	"lxde-gtk3" "Install the LXDE (with GTK 3) desktop environment" \
+	"lxde" "Install the LXDE desktop environment" \
 	"lxqt" "Install the LXQt desktop environment" \
 	"mate" "Install the MATE desktop environment" \
 	"plasma" "Install the KDE Plasma desktop environment" \
@@ -197,20 +196,42 @@ desktopconfig() {
 	"i3" "Install the i3 window manager" \
 	"sway" "Install the Sway window manager" \
 	"No DE" "Install nothing, minimal installation" 3>&1 1>&2 2>&3)
+
 	if [[ "$desktop" != "No DE" ]]
 	then
+		desktop_packages=("xorg-server" "$desktop")
+		if [[ "$desktop" = "cinnamon" ]]; then
+			desktop_packages+=("metacity")
+		elif [[ "$desktop" = "lxqt" ]]; then
+			desktop_packages+=("oxygen-icons")
+		fi
+
+		termemul=$(whiptail --title "Terminal emulator" --menu --nocancel "Which terminal emulator do you want?" 25 78 12 \
+		"alacritty" "A cross-platform, GPU-accelerated terminal emulator" \
+		"cool-retro-term" "A terminal emulator that mimics an old cathode display" \
+		"deepin-terminal" "Terminal emulator for the Deepin desktop" \
+		"foot" "Lightweight terminal emulator for Wayland with sixel support" \
+		"konsole" "Terminal emulator for the KDE desktop" \
+		"kitty" "A modern, hackable, featureful, OpenGL-based term. emulator" \
+		"qterminal" "Lightweight Qt-based terminal emulator" \
+		"terminology" "Terminal emulator by the Enlightenment project team" \
+		"xterm" "Simple terminal emulator for the X Window System"
+		"yakuake" "Drop-down terminal based on Konsole"
+		"zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
+		desktop_packages+=("$termemul")
+
 		displaymgr=$(whiptail --title "Display manager" --menu --nocancel "What display manager do you want?" 25 78 7 \
 		"sddm" "Recommended for KDE & LXQt" \
 		"ly" "Terminal display manager" \
 		"gdm" "Recommended for GNOME" \
 		"lightdm" "Cross-desktop display manager" \
-		"lxdm" "LXDE display manager with GTK 2" \
-		"lxdm-gtk3" "LXDE display manager with GTK 3" \
-		"No DM" "Don't install a display manager" 3>&1 1>&2 2>&3)
-		demenu="$desktop + $displaymgr"
+		"lxdm" "LXDE display manager" \
+		"xorg-xinit" "Start GUIs manually with startx/xinitrc" 3>&1 1>&2 2>&3)
+		demenu="DE: $desktop, TE: $termemul, DM: $displaymgr"
+		desktop_pkgs+=("$displaymgr")
 
 	else
-		demenu="$desktop"
+		demenu="DE: $desktop"
 	fi
 	setdesktop=true
 	main
@@ -272,7 +293,7 @@ whiptail --title "Getting things ready..." --infobox "Installing the base packag
 pacstrap /mnt base libnewt --noconfirm --needed > /dev/tty2 2>&1
 sleep 1
 
-whiptail --title "Getting things ready..." --infobox "Doing some other stuff..." 8 35
+whiptail --title "Getting things ready..." --infobox "Copying installation files..." 8 35
 mkdir /mnt/install
 echo $locale > /mnt/install/lang
 language=$(cat /mnt/install/lang | awk '{print $1}')
@@ -365,13 +386,12 @@ fi
 whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
 pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/tty2
 
-if [[ "$desktop" != "No DE" && "$displaymgr" != "No DM" ]]; then
+if [[ "$desktop" != "No DE" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Installing $desktop with $displaymgr..." 8 35
-	pacman -S xorg $desktop $displaymgr alacritty --noconfirm --needed > /dev/tty2
-	systemctl enable $displaymgr
-elif [[ "$desktop" != "No DE" && "$displaymgr" = "No DM" ]]; then
-	whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
-	pacman -S xorg $desktop alacritty --noconfirm --needed > /dev/tty2
+	pacman -S "${desktop_packages[@]}" --noconfirm --needed > /dev/tty2
+	if [[ "$displaymgr" = "xorg-xinit" ]]; then
+		systemctl enable $displaymgr
+	fi
 fi
 
 whiptail --title "Installing Arch Linux..." --infobox "Blacklisting the PC speaker..." 8 35
@@ -617,6 +637,7 @@ check() {
 	fi
 }
 
+
 # Set the menu choices and boolean things to the default
 partmenu="Select partitions... (not set)"
 setpart=false
@@ -672,9 +693,9 @@ main() {
     8)
         desktopconfig
         ;;
-    9)
+	9)
 		check
-        ;;
+		;;
     *)
         exit 0
         ;;
