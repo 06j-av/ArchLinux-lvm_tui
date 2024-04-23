@@ -199,11 +199,11 @@ desktopconfig() {
 
 	if [[ "$desktop" != "No DE" ]]
 	then
-		desktop_packages=("xorg-server" "$desktop")
+		desktop_pkgs=("xorg-server" "$desktop")
 		if [[ "$desktop" = "cinnamon" ]]; then
-			desktop_packages+=("metacity")
+			desktop_pkgs+=("metacity")
 		elif [[ "$desktop" = "lxqt" ]]; then
-			desktop_packages+=("oxygen-icons")
+			desktop_pkgs+=("oxygen-icons")
 		fi
 
 		termemul=$(whiptail --title "Terminal emulator" --menu --nocancel "Which terminal emulator do you want?" 25 78 12 \
@@ -215,10 +215,10 @@ desktopconfig() {
 		"kitty" "A modern, hackable, featureful, OpenGL-based term. emulator" \
 		"qterminal" "Lightweight Qt-based terminal emulator" \
 		"terminology" "Terminal emulator by the Enlightenment project team" \
-		"xterm" "Simple terminal emulator for the X Window System"
-		"yakuake" "Drop-down terminal based on Konsole"
+		"xterm" "Simple terminal emulator for the X Window System" \
+		"yakuake" "Drop-down terminal based on Konsole" \
 		"zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
-		desktop_packages+=("$termemul")
+		desktop_pkgs+=("$termemul")
 
 		displaymgr=$(whiptail --title "Display manager" --menu --nocancel "What display manager do you want?" 25 78 7 \
 		"sddm" "Recommended for KDE & LXQt" \
@@ -384,11 +384,11 @@ else
 fi
 
 whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
-pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/tty2
+pacman -S pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/tty2 2>&1
 
 if [[ "$desktop" != "No DE" ]]; then
 	whiptail --title "Installing Arch Linux..." --infobox "Installing $desktop with $displaymgr..." 8 35
-	pacman -S "${desktop_packages[@]}" --noconfirm --needed > /dev/tty2
+	pacman -S "${desktop_pkgs[@]}" --noconfirm --needed > /dev/tty2 2>&1
 	if [[ "$displaymgr" = "xorg-xinit" ]]; then
 		systemctl enable $displaymgr
 	fi
@@ -400,7 +400,10 @@ sleep 1
 
 whiptail --title "Installing Arch Linux..." --infobox "Clearing the pacman cache..." 8 35
 pacman -Scc --noconfirm > /dev/tty2
-rm -f /var/cache/pacman/pkg/*
+rm -rf /var/cache/pacman/pkg/*
+
+rm -rf /mnt/install
+
 exit
 INSTALL
 
@@ -614,7 +617,6 @@ Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; 
 NVIDIAOPENHOOK
 
 	arch-chroot /mnt /bin/bash install/install.sh
-
 }
 
 check() {
@@ -708,6 +710,7 @@ rebootconfirm=$(whiptail --title "Chroot or reboot?" --yesno "Installation is CO
 if [[ $rebootconfirm -eq 0 ]]; then
 	echo "Chrooting..."
 	arch-chroot /mnt
+	exit 0
 else
 	{
     for ((i = 0 ; i <= 100 ; i+=5)); do
