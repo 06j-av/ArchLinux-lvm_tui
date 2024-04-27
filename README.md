@@ -2,8 +2,13 @@
 
 This script automates the installation process of Arch Linux with Logical Volume Management (LVM) and uses a terminal user interface with `whiptail`. It is designed to make the installation steps more simpler for incoming Arch Linux users.
 
+This is a **Terminal User Interface** variant of the [text-based installer](https://github.com/06j-av/archlinux-installScript-LVM) that I likely will not even touch anymore because this one is much better than the other one (at least in my opinion).
+
 ## Some stuff you need to know
-- This script will only make one user, so for now you can add users with `useradd` when you boot into your installation.
+- This script is **still in development**. It is only public so I can test this in a virtual machine :p
+- Don't run anything in the 'newinstaller/' directory in this repository. I just didn't make a branch for the next update to this installer and just slapped an **UNFINISHED** updated script in a folder.
+- This script will only make __one__ user.
+   - You'll have to add extra users yourself when you reboot into the installation.
 - This script will only have options for kernel (`linux` and `linux-lts`), and installs `alacritty` as the default terminal emulator.
 
 ## Things you'll need
@@ -47,9 +52,26 @@ This script automates the installation process of Arch Linux with Logical Volume
 7. **Reboot**:
    - Once the installation is complete, reboot your system and remove the USB drive, and if everything went well, you can say "hello" to your new Arch Linux system.
 
+## Next steps
+This can be seen in the `newinstaller/` directory on this repository.
+
+- Revamped menu or something like that
+- Support for configuration files to skip the whole menu-by-menu process
+   - For what I have in mind, it's basically just setting the variables yourself
+- Adding additional applications (extra packages to install during the installation)
+- More kernels
+   - I might just add the kernels that are officially supported according to the [ArchWiki](https://wiki.archlinux.org/title/Kernel#Officially_supported_kernels).
+- Addition to basic layout (just the partition) and LVM + LUKS encryption
+- Install the AUR helper for access to the Arch User Repository
+   - Likely `yay`
+- Probably going to run the chroot commands with `arch-chroot`
+- Add multiple users
+
+`At this point this might just turn into the official archinstall program that's included in the live ISO but it has LVM setup support soooooo yay!!!!`
+
 ## Notes
 
-- Ensure that you have a backup of your important data before proceeding with the installation, as it will overwrite existing partitions.
+- Ensure that you have a backup of your important data before proceeding with the installation, as it will format your chosen partitions.
 - If you want this program to fit *your* specific configurations, go ahead and modify the script according to your requirements!
 
 ## Support
