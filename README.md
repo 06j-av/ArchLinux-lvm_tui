@@ -14,10 +14,10 @@ This script automates the installation process of Arch Linux with Logical Volume
 
 ## Usage
 
-1. **Boot from USB**: Insert the bootable USB drive into your system, boot from it, and get yourself a great internet connection. (obviously)
+1. **Boot from USB**: Insert the bootable USB drive into your system, boot from it, and get yourself a great internet connection with Ethernet or a wireless connection with `iwctl`. (obviously)
 
 2. **Prepare Disk**:
-   - Ensure that you create an EFI System Partition (ESP) and a partition with the type set as "Linux LVM". You can confirm using:
+   - Ensure that you create an EFI System Partition (ESP) and a partition with the type set as "Linux LVM". You can confirm these actions using:
     ```
     lsblk -o NAME,PARTTYPENAME
     ```
@@ -26,10 +26,7 @@ This script automates the installation process of Arch Linux with Logical Volume
 3. **Run some pacman commands**:
    - You'll need to run some pacman commands to ensure that the installation process goes smooth.
      ```
-     pacman -Sy
      pacman -S git
-     # In case you get errors about keys, run
-     pacman-key --init
      ```
     
 4. **Clone this repository**:
@@ -41,8 +38,6 @@ This script automates the installation process of Arch Linux with Logical Volume
 5. **Run the Script**:
    - Run the script. You shouldn't need to make the script executable, but if you need to, run `chmod +x setup.sh`.
      ```
-     ./ArchLinux-lvm_tui/setup.sh
-     # Or if you've entered the directory
      ./setup.sh
      ```
 
@@ -59,4 +54,4 @@ This script automates the installation process of Arch Linux with Logical Volume
 
 ## Support
 
-If you encounter any issues or have questions about the script, feel free to [report it as an issue](https://github.com/06j-av/archlinux-installScript-LVM/issues).
+If you encounter any issues or have questions about the script, feel free to [report it as an issue](https://github.com/06j-av/ArchLinux-lvm_tui/issues).
