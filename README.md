@@ -64,7 +64,6 @@ This can be seen in the `newinstaller/` directory on this repository.
 - Addition to basic layout (just the partition) and LVM + LUKS encryption
 - Install the AUR helper for access to the Arch User Repository
    - Likely `yay`
-- Probably going to run the chroot commands with `arch-chroot`
 - Add multiple users
 
 `At this point this might just turn into the official archinstall program that's included in the live ISO but it has LVM setup support soooooo yay!!!!`
