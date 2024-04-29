@@ -84,7 +84,6 @@ selkernel() {
    	"linux-rt" "The realtime Linux kernel" \
    	"linux-rt-lts" "The LTS realtime Linux kernel" \
    	"linux-zen" "The linux-zen Linux kernel")
-    kernelmenu="Selected kernel: $linuxkernel"
     setkernel=true
     main_menu
 }
@@ -193,7 +192,7 @@ settimezone() {
 }
 
 setlocale() {
-    choice=$(whiptail --title "System menu / Locale" --nocancel --menu "What's your locale?" 20 80 10 \
+    locale=$(whiptail --title "System menu / Locale" --nocancel --menu "What's your locale?" 20 80 10 \
 		"en_US.UTF-8" "English (United States)" \
 		"en_AU.UTF-8" "English (Australia)" \
 		"en_CA.UTF-8" "English (Canada)" \
@@ -260,7 +259,7 @@ sysmenu() {
 		"1" "< Back" \
 		"2" "Set the hostname" \
 		"3" "Set the timezone" \
-		"4" "Set the locale"
+		"4" "Set the locale" \
 		"5" "Set CPU microcode" \
 		"6" "Set GPU drivers" \
 		"7" "Set swap space" 3>&1 1>&2 2>&3)
@@ -276,8 +275,8 @@ sysmenu() {
 }
 
 setdesktop() {
-    min_install=true
-    desktop=$(whiptail --title "Things to install / Desktop environment" --menu --nocancel "What desktop environment do you want?" 25 78 12 \
+	min_install=true
+    	desktop=$(whiptail --title "Things to install / Desktop environment" --menu --nocancel "What desktop environment do you want?" 25 78 12 \
 	"budgie" "Install the Budgie desktop environment" \
 	"cinnamon" "Install the Cinnamon desktop environment" \
 	"gnome" "Install the GNOME desktop environment" \
@@ -292,7 +291,7 @@ setdesktop() {
 
 	if [[ "$desktop" != "No DE" ]]
 	then
-        min_install=false
+        	min_install=false
 		desktop_pkgs=("xorg-server" "$desktop")
 		if [[ "$desktop" = "cinnamon" ]]; then
 			desktop_pkgs+=("metacity")
@@ -328,21 +327,17 @@ settermemul() {
 		"xterm" "Simple terminal emulator for the X Window System" \
 		"yakuake" "Drop-down terminal based on Konsole" \
 		"zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
-		desktop_pkgs+=("$termemul")
-    setterm=true
+		desktop_pkgs+=("$termemul")]
     desktopmenu
 }
 
 setapps() {
-    aurinstall=false
+	aurinstall=false
 	whiptail --title "Things to install / Install AUR helper" --yesno "Do you want to install yay to access packages in the Arch User Repository?." --defaultno --yes-button "Install" --no-button "Don't install" 0 0 3>&1 1>&2 2>&3
 	if [[ $? -eq 0 ]]; then
-        aurinstall=true
-    fi
-    while true; do
-        package=$(whiptail --title "Things to install / Install other packages" --nocancel --inputbox "If you want to install other packages, enter their package name here.\n\nLeave blank to finish." 0 0 3>&1 1>&2 2>&3)
-        if [ $? -ne 0 ]
-    done
+        	aurinstall=true
+	fi
+ 	desktopmenu
 }
 
 desktopmenu() {
@@ -350,7 +345,7 @@ desktopmenu() {
 		"1" "< Back" \
 		"2" "Desktop environments" \
 		"3" "Terminal emulators" \
-		"4" "Install other packages" 3>&1 1>&2 2>&3)
+		"4" "AUR helper" 3>&1 1>&2 2>&3)
     case $choice in
         1) checkdesktopmenu ;;
         2) setdesktop ;;
@@ -369,6 +364,88 @@ configfile() {
     main_menu
 }
 
+installarch() {
+	{
+    	for ((i = 0 ; i <= 100 ; i+=1)); do
+        	sleep 0.05
+        	echo $i
+    	done
+	} | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by entering Alt+F2 (the tty2 console)." 8 50 0
+
+	whiptail --title "Installing Arch Linux..." --infobox "Here we go!" 8 35
+	sleep 3
+
+	if ! $formatefi; then
+		whiptail --title "Partitioning" --infobox "The ESP has been untouched." 8 35
+		sleep 2
+	else
+		whiptail --title "Partitioning" --infobox "Formatting the EFI System partition..." 8 35
+		mkfs.fat -F32 $efipart > /dev/tty2 2>&1
+
+	fi
+
+	if [[ "$disklayout" = "lvm" ]]; then
+		whiptail --title "LVM setup" --infobox "Creating physical volume $rootpart..." 8 35
+		pvcreate $rootpart > /dev/tty2 2>&1
+		sleep 1
+
+		whiptail --title "LVM setup" --infobox "Creating volume group $vgname..." 8 35
+		vgcreate $vgname $rootpart > /dev/tty2 2>&1
+		sleep 1
+
+		whiptail --title "LVM setup" --infobox "Creating logical volume $lvname" 8 35
+		lvcreate -l 100%FREE $vgname -n $lvname > /dev/tty2 2>&1
+		sleep 1
+
+		whiptail --title "LVM setup" --infobox "Finishing LVM setup..." 8 35
+		modprobe dm_mod
+		sleep 1
+		vgchange -ay > /dev/tty2 2>&1
+		sleep 1
+		rootpath=/dev/$vgname/$lvname
+
+		whiptail --title "LVM setup" --infobox "Formatting & mounting $rootpath..." 8 35
+		mkfs.ext4 -q $rootpath
+		sleep 1
+  		mount $rootpath /mnt
+    		sleep 1
+
+	elif [[ "$disklayout" = "basic" ]]; then
+ 		whiptail --title "Partitioning" --infobox "Formatting & mounting $rootpart..." 8 35
+ 		mkfs.ext4 -q $rootpart
+   		mount $rootpart /mnt
+     		sleep 1
+ 	fi
+	whiptail --title "Partitioning" --infobox "Formatting & mounting $rootpart..." 8 35
+   	mount --mkdir $efipart /mnt/boot/efi
+    	sleep 1
+
+ 	whiptail --title "Getting things ready..." --infobox "Building fstab file..." 8 35
+	mkdir /mnt/etc
+	genfstab -U /mnt >> /mnt/etc/fstab
+	sleep 1
+
+	whiptail --title "Getting things ready..." --infobox "Getting some files..." 8 35
+	mkdir /mnt/install
+	sleep 1
+
+	whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
+	pacstrap /mnt base libnewt --noconfirm --needed > /dev/tty2 2>&1
+	sleep 1
+
+ 	whiptail --title "Installing Arch Linux..." --infobox "Installing the Linux kernel and other tools..." 8 35
+	bash -c "arch-chroot /mnt pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl dialog bluez bluez-utils ntfs-3g --noconfirm --needed" > /dev/tty2 2>&1
+ 
+	whiptail --title "Installing Arch Linux..." --infobox "Enabling Network Manager..." 8 35
+	bash -c "arch-chroot /mnt systemctl enable NetworkManager" > /dev/tty2
+
+ 	if [[ "$disklayout" = "lvm" ]]; then
+		whiptail --title "Installing Arch Linux..." --infobox "Configuring the Linux initcpio..." 8 35
+  		
+  	fi
+  		
+}
+
 main_menu() {
     choice=$(whiptail --title "Main Menu" --nocancel --menu "Select an option below using the UP/DOWN keys and ENTER." 20 80 10 \
 		"1" "Select partitions" \
@@ -376,7 +453,7 @@ main_menu() {
 		"3" "Create your user account >" \
 		"4" "Set the root password" \
 		"5" "System settings >" \
-		"6" "Choose some things to install... >"
+		"6" "Choose some things to install... >" \
 		"7" "Install Arch Linux" \
 		"8" "Use a configuration file..." \
 		"9" "Exit installer" 3>&1 1>&2 2>&3)
