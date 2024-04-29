@@ -91,6 +91,7 @@ selkernel() {
 setname() {
     input=$(whiptail --title "Full name" --nocancel --inputbox "What's your name?" 0 0 3>&1 1>&2 2>&3)
     if [[ ! -z "$input" ]]; then
+    	usename=true
         name="$input"
     fi
     usermenu
@@ -161,9 +162,9 @@ selrootpasswd() {
     while ! $good_input; do
         input=$(whiptail --passwordbox --nocancel "Enter the password for root:" 8 78 --title "User password" 3>&1 1>&2 2>&3)
         confirm=$(whiptail --passwordbox --nocancel "Re-enter password to verify:" 8 78 --title "User password" 3>&1 1>&2 2>&3)
-        if [ -z "$userpasswd" ]; then
+        if [ -z "$input" ]; then
             whiptail --title "Something went wrong" --msgbox "You can't have an empty password." 2 15
-        elif [ "$confirm" != "$userpasswd" ]; then
+        elif [ "$confirm" != "$input" ]; then
             whiptail --title "Something went wrong" --msgbox "The two passwords didn't match!" 2 15
         else
             rootpasswd="$input"
@@ -327,7 +328,7 @@ settermemul() {
 		"xterm" "Simple terminal emulator for the X Window System" \
 		"yakuake" "Drop-down terminal based on Konsole" \
 		"zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
-		desktop_pkgs+=("$termemul")]
+		desktop_pkgs+=("$termemul")
     desktopmenu
 }
 
@@ -427,6 +428,7 @@ installarch() {
 
 	whiptail --title "Getting things ready..." --infobox "Getting some files..." 8 35
 	mkdir /mnt/install
+ 	cp $dir/installfiles/* /mnt/install/
 	sleep 1
 
 	whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
@@ -441,9 +443,28 @@ installarch() {
 
  	if [[ "$disklayout" = "lvm" ]]; then
 		whiptail --title "Installing Arch Linux..." --infobox "Configuring the Linux initcpio..." 8 35
-  		
+    		bash -c "arch-chroot /mnt cp -f /install/mkinit.conf /etc/mkinitcpio.conf"
+      		bash -c "arch-chroot /mnt mkinitcpio -P" > /dev/tty2 2>&1
   	fi
-  		
+
+    	whiptail --title "Installing Arch Linux..." --infobox "Setting the locale..." 8 35
+	bash -c "arch-chroot /mnt sed -i 's/#$locale/$locale/' /etc/locale.gen"
+	bash -c "arch-chroot /mnt locale-gen" > /dev/tty2
+	echo "LANG=$locale" > /mnt/etc/locale.conf
+	sleep 1
+
+ 	whiptail --title "Installing Arch Linux..." --infobox "Configuring users and passwords..." 8 35
+   	if [[ "$usename" = "true" ]]; then
+		bash -c "arch-chroot /mnt useradd -m -g users -G wheel $username -c $name" > /dev/tty2
+     	else
+		bash -c "arch-chroot /mnt useradd -m -g users -G wheel $username" > /dev/tty2
+      	fi
+
+	bash -c "arch-chroot /mnt 'echo $userpasswd | passwd --stdin $username'"
+ 	bash -c "arch-chroot /mnt 'echo $rootpasswd | passwd --stdin root'"
+  	sleep 1
+	bash -c "arch-chroot /mnt sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers"
+   	
 }
 
 main_menu() {
