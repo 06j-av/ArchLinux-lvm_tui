@@ -34,6 +34,7 @@ start() {
     whiptail --title "Supported system" --msgbox "You're system's all good! Let's proceed." 0 5
 }
 
+# Variables: $efipart (str, /dev/ path), $formatefi (boolean t/f), $rootpart (str, /dev/ path)
 partconfig() {
     partitions=$(lsblk -npo NAME,FSTYPE,SIZE,PARTTYPENAME)
 	efipart=$(whiptail --title "Select partitions..." --nocancel --inputbox "Enter the path to the EFI partition.\n\nThis is usually the first partition on your disk.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
@@ -76,6 +77,7 @@ partconfig() {
     main_menu
 }
 
+# Variable: $linuxkernel
 selkernel() {
     linuxkernel=$(whiptail --title "Select a kernel" --nocancel --menu "Choose the kernel that you want to install." 20 70 4 3>&1 1>&2 2>&3 \
  	"linux" "The vanlilla Linux kernel and modules" \
@@ -88,6 +90,7 @@ selkernel() {
     main_menu
 }
 
+# Variable: $name (str), $usename (boolean t/f)
 setname() {
     input=$(whiptail --title "Full name" --nocancel --inputbox "What's your name?" 0 0 3>&1 1>&2 2>&3)
     if [[ ! -z "$input" ]]; then
@@ -97,6 +100,7 @@ setname() {
     usermenu
 }
 
+# Variable: $username (str)
 setusername() {
     good_input=false
     while ! $good_input; do
@@ -116,6 +120,7 @@ setusername() {
     usermenu
 }
 
+# Variable: $userpasswd (str)
 setuserpasswd() {
     good_input=false
     while ! $good_input; do
@@ -157,6 +162,7 @@ usermenu() {
     esac
 }
 
+# Variable: $rootpasswd (str)
 selrootpasswd() {
     good_input=false
     while ! $good_input; do
@@ -175,12 +181,14 @@ selrootpasswd() {
     usermenu
 }
 
+# Variable: $nameofhost (str)
 sethostname() {
     nameofhost=$(whiptail --title "System menu / Hostname" --nocancel --inputbox "What's going to be this system's hostname?" 0 0 3>&1 1>&2 2>&3)
     sethost=true
     sysmenu
 }
 
+# Variable: $timezone
 settimezone() {
     timezones_array=()
 	while IFS= read -r line; do
@@ -192,6 +200,7 @@ settimezone() {
 	sysmenu
 }
 
+# Variable: $locale (str)
 setlocale() {
     locale=$(whiptail --title "System menu / Locale" --nocancel --menu "What's your locale?" 20 80 10 \
 		"en_US.UTF-8" "English (United States)" \
@@ -209,14 +218,16 @@ setlocale() {
     sysmenu
 }
 
+# Variable: $cpumake (str)
 setcpu() {
-    choice=$(whiptail --title "System menu / CPU" --nocancel --menu "What's your locale?" 20 80 10 \
+    cpumake=$(whiptail --title "System menu / CPU" --nocancel --menu "What's your locale?" 20 80 10 \
 		"amd" "Install microcode for AMD CPUs" \
 		"intel" "Install microcode for Intel CPUs" 3>&1 1>&2 2>&3)
     setmicrocode=true
     sysmenu
 }
 
+# Variable: $gpupkg (str)
 setgpu() {
     if [[ "$linuxkernel" = "linux" ]]; then
         recommended="nvidia or nvidia-open"
@@ -236,9 +247,14 @@ setgpu() {
     sysmenu
 }
 
+# Variable: $swapspace (str)
 setswap() {
     swapspace=$(whiptail --title "System menu / Swap space" --nocancel --inputbox "Enter the size of your swap space in human-readable format.\n\nExamples:\n2G, 4G\n200M, 800M" 0 0 3>&1 1>&2 2>&3)
-	setswap=true
+	if [[ -z "$swapspace" ]]; then
+		setswap=false
+	else
+		setswap=true
+	fi
 	sysmenu
 }
 
@@ -275,6 +291,7 @@ sysmenu() {
     esac
 }
 
+# Variable: $min_install (boolean t/f), $desktop (str), {$desktop_pkgs[@]} (array), $displaymgr (str)
 setdesktop() {
 	min_install=true
     	desktop=$(whiptail --title "Things to install / Desktop environment" --menu --nocancel "What desktop environment do you want?" 25 78 12 \
@@ -292,7 +309,7 @@ setdesktop() {
 
 	if [[ "$desktop" != "No DE" ]]
 	then
-        	min_install=false
+		min_install=false
 		desktop_pkgs=("xorg-server" "$desktop")
 		if [[ "$desktop" = "cinnamon" ]]; then
 			desktop_pkgs+=("metacity")
@@ -315,6 +332,7 @@ setdesktop() {
 	desktopmenu
 }
 
+# Variable: $termemul
 settermemul() {
     termemul=$(whiptail --title "Things to install / Terminal emulator" --menu --nocancel "Which terminal emulator do you want?" 25 78 12 \
 		"alacritty" "A cross-platform, GPU-accelerated terminal emulator" \
@@ -330,9 +348,11 @@ settermemul() {
 		"zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
 		desktop_pkgs+=("$termemul")
     desktopmenu
+
 }
 
-setapps() {
+# Variable: $aurinstall (boolean t/f)
+setaur() {
 	aurinstall=false
 	whiptail --title "Things to install / Install AUR helper" --yesno "Do you want to install yay to access packages in the Arch User Repository?." --defaultno --yes-button "Install" --no-button "Don't install" 0 0 3>&1 1>&2 2>&3
 	if [[ $? -eq 0 ]]; then
@@ -351,7 +371,7 @@ desktopmenu() {
         1) checkdesktopmenu ;;
         2) setdesktop ;;
         3) settermemul ;;
-        4) setapps ;;
+        4) setaur ;;
     esac
 }
 
@@ -415,8 +435,9 @@ installarch() {
  		whiptail --title "Partitioning" --infobox "Formatting & mounting $rootpart..." 8 35
  		mkfs.ext4 -q $rootpart
    		mount $rootpart /mnt
-     		sleep 1
+		sleep 1
  	fi
+
 	whiptail --title "Partitioning" --infobox "Formatting & mounting $rootpart..." 8 35
    	mount --mkdir $efipart /mnt/boot/efi
     	sleep 1
@@ -429,42 +450,143 @@ installarch() {
 	whiptail --title "Getting things ready..." --infobox "Getting some files..." 8 35
 	mkdir /mnt/install
  	cp $dir/installfiles/* /mnt/install/
+ 	if [[ "$gpupkg" != "mesa" ]]; then
+ 		cat <<NVIDIAHOOK > /mnt/install/nvidia.hook
+[Trigger]
+Operation=Install
+Operation=Upgrade
+Operation=Remove
+Type=Package
+Target=$gpupkg
+Target=$linuxkernel
+
+[Action]
+Description=Update NVIDIA module in initcpio
+Depends=mkinitcpio
+When=PostTransaction
+NeedsTargets
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+NVIDIAHOOK
+	fi
 	sleep 1
 
 	whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
-	pacstrap /mnt base libnewt --noconfirm --needed > /dev/tty2 2>&1
+	pacstrap /mnt base --noconfirm --needed &> /dev/tty2
 	sleep 1
 
  	whiptail --title "Installing Arch Linux..." --infobox "Installing the Linux kernel and other tools..." 8 35
-	bash -c "arch-chroot /mnt pacman -S $linuxkernel $linuxkernel-headers linux-firmware base-devel lvm2 git neofetch zip $cpumake-ucode neovim networkmanager wpa_supplicant wireless_tools netctl dialog bluez bluez-utils ntfs-3g --noconfirm --needed" > /dev/tty2 2>&1
- 
+	pacstrap /mnt $linuxkernel $linuxkernel-headers linux-firmware base-devel git neofetch zip $cpumake-ucode networkmanager neovim wpa_supplicant wireless_tools netctl dialog bluez bluez-utils ntfs-3g &> /dev/tty2
+
 	whiptail --title "Installing Arch Linux..." --infobox "Enabling Network Manager..." 8 35
-	bash -c "arch-chroot /mnt systemctl enable NetworkManager" > /dev/tty2
+	arch-chroot /mnt systemctl enable NetworkManager &> /dev/tty2
 
  	if [[ "$disklayout" = "lvm" ]]; then
+		pacstrap /mnt lvm2 &> /dev/tty2
 		whiptail --title "Installing Arch Linux..." --infobox "Configuring the Linux initcpio..." 8 35
-    		bash -c "arch-chroot /mnt cp -f /install/mkinit.conf /etc/mkinitcpio.conf"
-      		bash -c "arch-chroot /mnt mkinitcpio -P" > /dev/tty2 2>&1
+		arch-chroot /mnt cp -f /install/mkinit.conf /etc/mkinitcpio.conf
+		arch-chroot /mnt mkinitcpio -P > /dev/tty2 2>&1
   	fi
 
-    	whiptail --title "Installing Arch Linux..." --infobox "Setting the locale..." 8 35
-	bash -c "arch-chroot /mnt sed -i 's/#$locale/$locale/' /etc/locale.gen"
-	bash -c "arch-chroot /mnt locale-gen" > /dev/tty2
+	whiptail --title "Installing Arch Linux..." --infobox "Setting the locale..." 8 35
+	sed -i 's/#$locale/$locale/' /mnt/etc/locale.gen
+	arch-chroot /mnt locale-gen > /dev/tty2
 	echo "LANG=$locale" > /mnt/etc/locale.conf
 	sleep 1
 
  	whiptail --title "Installing Arch Linux..." --infobox "Configuring users and passwords..." 8 35
    	if [[ "$usename" = "true" ]]; then
-		bash -c "arch-chroot /mnt useradd -m -g users -G wheel $username -c $name" > /dev/tty2
-     	else
-		bash -c "arch-chroot /mnt useradd -m -g users -G wheel $username" > /dev/tty2
-      	fi
-
-	bash -c "arch-chroot /mnt 'echo $userpasswd | passwd --stdin $username'"
- 	bash -c "arch-chroot /mnt 'echo $rootpasswd | passwd --stdin root'"
+		arch-chroot /mnt useradd -m -g users -G wheel $username -c "$name"
+	else
+		arch-chroot /mnt useradd -m -g users -G wheel $username
+	fi
+	arch-chroot /mnt chpasswd <<<"$username:$userpasswd"
+ 	arch-chroot /mnt chpasswd <<<"root:$rootpasswd"
   	sleep 1
-	bash -c "arch-chroot /mnt sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers"
+	sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /mnt/etc/sudoers
    	
+   	whiptail --title "Installing Arch Linux..." --infobox "Installing and configuring GRUB..." 8 35
+	pacstrap /mnt grub dosfstools mtools os-prober efibootmgr &> /dev/tty2
+	arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=arch_grub --recheck &> /dev/tty2
+	if [ -d /boot/grub/locale ]; then
+		cp /mnt/usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /mnt/boot/grub/locale/en.mo
+		sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /mnt/etc/default/grub
+		arch-chroot /mnt grub-mkconfig --output=/boot/grub/grub.cfg &> /dev/tty2
+	else
+		mkdir /mnt/boot/grub/locale
+		cp /mnt/usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /mnt/boot/grub/locale/en.mo
+		sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /mnt/etc/default/grub
+		arch-chroot /mnt grub-mkconfig --output=/boot/grub/grub.cfg &> /dev/tty2
+	fi
+	sleep 1
+
+	if [[ "$setswap" = "true" ]]; then
+		whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
+		mkswap -U clear --size $swapspace --file /swapfile > /dev/tty2
+		swapon /swapfile
+		echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
+		mount -a
+		swapon -a
+
+	fi
+
+	whiptail --title "Installing Arch Linux..." --infobox "Configuring the system..." 8 35
+	echo "$nameofhost" > /mnt/etc/hostname
+	echo -e "127.0.0.1	localhost\n127.0.1.1	$nameofhost" > /mnt/etc/hosts
+	arch-chroot /mnt ln -sf /usr/share/zoneinfo/$timezone /etc/localtime &> /dev/tty2
+	arch-chroot /mnt hwclock --systohc &> /dev/tty2
+	arch-chroot /mnt systemctl enable systemd-timesyncd &> /dev/tty2
+	sleep 1
+
+	whiptail --title "Installing Arch Linux..." --infobox "Enabling the multilib repository..." 8 35
+	sed -i "/\[multilib\]/,/Include/"'s/^#//' /mnt/etc/pacman.conf
+	arch-chroot /mnt pacman -Sy &> /dev/tty2
+
+	if [[ "$gpupkg" != "mesa" ]]; then
+		whiptail --title "Installing Arch Linux..." --infobox "Installing NVIDIA drivers..." 8 35
+		pacstrap /mnt $gpupkg nvidia-utils lib32-nvidia-utils
+		mkdir /mnt/etc/pacman.d/hooks
+		cp /mnt/install/nvidia.hook /mnt/etc/pacman.d/hooks/
+		sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"/' /mnt/etc/default/grub
+		cp -f /mnt/install/mkinitnvidia.conf /mnt/etc/mkinitcpio.conf
+		arch-chroot /mnt mkinitcpio -P &> /dev/tty2
+		arch-chroot /mnt grub-mkconfig --output=/boot/grub/grub.cfg &> /dev/tty2
+	else
+		whiptail --title "Installing Arch Linux..." --infobox "Installing Nouveau GPU drivers..." 8 35
+		pacstrap /mnt mesa lib32-mesa
+	fi
+	whiptail --title "Installing Arch Linux..." --infobox "Installing PipeWire..." 8 35
+	pacstrap /mnt pipewire lib32-pipewire wireplumber pipewire-pulse pipewire-alsa pipewire-jack lib32-pipewire-jack --noconfirm --needed > /dev/tty2 2>&1
+
+	if ! $min_install; then
+		whiptail --title "Installing Arch Linux..." --infobox "Installing desktop packages..." 8 35
+		pacstrap /mnt ${desktop_pkgs[@]} &> /dev/tty2
+		if [[ "$displaymgr" != "xorg-xinit" ]]; then
+			arch-chroot /mnt systemctl enable $displaymgr
+		fi
+	fi
+	sleep 1
+
+	whiptail --title "Installing Arch Linux..." --infobox "Blacklisting the PC speaker..." 8 35
+	echo -e "blacklist pcspkr\nblacklist snd_pcsp" > /mnt/etc/modprobe.d/nobeep.conf
+	sleep 1
+
+	rm -rf /mnt/install
+	whiptail --title "Installation complete" --msgbox "Installation is now COMPLETE.\n\nYou will now be returned to the main menu." 0 0
+	main_menu
+}
+
+exitoptions() {
+	choice=$(whiptail --title "Exit options" --nocancel --menu "How would you like to exit?" 20 80 10 \
+		"1" "Return to Linux console" \
+		"2" "Power off the system" \
+		"3" "Reboot the system" \
+		"4" "Chroot into installation" 3>&1 1>&2 2>&3)
+	case $choice in
+		1) exit 0 ;;
+		2) poweroff ;;
+		3) reboot ;;
+		4) arch-chroot /mnt ;;
+	esac
 }
 
 main_menu() {
@@ -487,7 +609,7 @@ main_menu() {
         6) desktopmenu ;;
         7) installarch ;;
         8) configfile ;;
-        *) exit 0 ;;
+        *) exitoptions ;;
     esac
 }
 
