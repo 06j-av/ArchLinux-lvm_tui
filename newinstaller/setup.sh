@@ -30,7 +30,7 @@ start() {
         whiptail --title "Unsupported architecture" --msgbox "This installation script only supports the x86_64 architecture.\n\nYou cannot run the installer with the current system architecture." 2 15
         exit 1
     fi
-    whiptail --title "Supported system" --msgbox "You're system's all good! Let's proceed." 0 5
+    whiptail --title "Supported system" --msgbox "Your system's all good! Let's proceed." 0 5
 }
 
 # Variables: $efipart (str, /dev/ path), $formatefi (boolean t/f), $rootpart (str, /dev/ path)
@@ -127,9 +127,9 @@ setuserpasswd() {
     while ! $good_input; do
         input=$(whiptail --passwordbox --nocancel "Enter the password for $username:" 8 78 --title "User password" 3>&1 1>&2 2>&3)
         confirm=$(whiptail --passwordbox --nocancel "Re-enter password to verify:" 8 78 --title "User password" 3>&1 1>&2 2>&3)
-        if [ -z "$userpasswd" ]; then
+        if [ -z "$input" ]; then
             whiptail --title "Something went wrong" --msgbox "You can't have an empty password." 0 0
-        elif [ "$confirm" != "$userpasswd" ]; then
+        elif [ "$confirm" != "$input" ]; then
             whiptail --title "Something went wrong" --msgbox "The two passwords didn't match!" 0 0
         else
             userpasswd="$input"
@@ -179,7 +179,7 @@ selrootpasswd() {
         fi
     done
     setrootpasswd=true
-    usermenu
+    main_menu
 }
 
 # Variable: $nameofhost (str)
@@ -191,6 +191,7 @@ sethostname() {
 
 # Variable: $timezone
 settimezone() {
+	timezones=$(timedatectl list-timezones)
     timezones_array=()
 	while IFS= read -r line; do
     	timezones_array+=("$line" "")
@@ -207,7 +208,7 @@ setlocale() {
 		"en_US.UTF-8" "English (United States)" \
 		"en_AU.UTF-8" "English (Australia)" \
 		"en_CA.UTF-8" "English (Canada)" \
-		"en_GB.UTF-8" "English (Great Britain)"
+		"en_GB.UTF-8" "English (Great Britain)" \
 		"es_ES.UTF-8" "Spanish (Spain)" \
 		"es_MX.UTF-8" "Spanish (Mexico)" \
 		"de_DE.UTF-8" "German (Germany)" \
@@ -241,7 +242,7 @@ setgpu() {
 		"nvidia" "Proprietary NVIDIA driver for 'linux'" \
 		"nvidia-lts" "Proprietary NVIDIA driver for 'linux-lts'" \
 		"nvidia-dkms" "Proprietary NVIDIA driver for other kernels" \
-		"nvidia-open" "Open-source NVIDIA driver for 'linux'"
+		"nvidia-open" "Open-source NVIDIA driver for 'linux'" \
 		"nvidia-open-dkms" "Open-source NVIDIA driver for other kernels" \
 		"mesa" "Open-source Nouveau GPU drivers" 3>&1 1>&2 2>&3)
     setgpupkg=true
@@ -365,7 +366,7 @@ setaur() {
 }
 
 checkdesktopmenu() {
-	if [[ "$setdedm" = true && "$setterm" = true ]]; then
+	if [[ "$setdedm" = true ]]; then
         setdesktop=true
         main_menu
     else
