@@ -1,7 +1,7 @@
 #!/bin/bash
 
 start() {
-    whiptail --title "Welcome to Arch Linux!" --msgbox "Hello!\n\nWelcome to the Arch Linux install script.\n\nMake sure your EFI and root partition is ready.\n\nWe'll need to check some things first." --ok-button "Let's get started!" 0 5
+    whiptail --title "Welcome to Arch Linux!" --msgbox "Hello!\n\nWelcome to the Arch Linux install script.\n\nMake sure your EFI and root partition is ready.\n\nWe'll need to check some things first." --ok-button "Begin" 0 5
 
     whiptail --title "Just a couple things first..." --infobox "Setting the directory..." 8 35
     script_dir="$(dirname "$0")"
@@ -40,7 +40,7 @@ partconfig() {
 	efipart=$(whiptail --title "Select partitions..." --nocancel --inputbox "Enter the path to the EFI partition.\n\nThis is usually the first partition on your disk.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
 	# Check if the ESP is a device file and a "EFI System" partition
-	if [[ -b "$efipart" && "$(lsblk -no TYPE "$efipart")"  == "part" && "$(lsblk -no PARTTYPENAME "$efipart" == "EFI System" )" ]]; then
+	if [[ -b "$efipart" && "$(lsblk -no TYPE "$efipart")"  == "part" && "$(lsblk -no PARTTYPENAME "$efipart" = "EFI System" )" ]]; then
 		echo "$efipart is a valid ESP."
 	else
 		whiptail --title "Something went wrong" --msgbox "$efipart is not a valid EFI System Partition." 2 15
@@ -54,7 +54,7 @@ partconfig() {
     fi
     rootpart=$(whiptail --title "Select partitions..." --nocancel --inputbox "You have selected $efipart as your EFI system partition.\n\Enter the path to your root partition.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
-    if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart" == "Linux LVM" )" ]]; then
+    if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart" = "Linux LVM" )" ]]; then
 		echo "$rootpart is a valid root partition."
 	else
 		whiptail --title "Something went wrong" --msgbox "$rootpart is not a valid root partition." 2 15
@@ -80,9 +80,9 @@ partconfig() {
 # Variable: $linuxkernel
 selkernel() {
     linuxkernel=$(whiptail --title "Select a kernel" --nocancel --menu "Choose the kernel that you want to install." 20 70 4 3>&1 1>&2 2>&3 \
- 	"linux" "The vanlilla Linux kernel and modules" \
+ 	"linux" "The vanilla Linux kernel" \
    	"linux-lts" "Long-term (LTS) Linux kernel" \
-   	"linux-hardened" "A security-focuzed Linux kernel" \
+   	"linux-hardened" "A security-focused Linux kernel" \
    	"linux-rt" "The realtime Linux kernel" \
    	"linux-rt-lts" "The LTS realtime Linux kernel" \
    	"linux-zen" "The linux-zen Linux kernel")
@@ -96,6 +96,8 @@ setname() {
     if [[ ! -z "$input" ]]; then
     	usename=true
         name="$input"
+	else
+		usename=false
     fi
     usermenu
 }
@@ -291,7 +293,7 @@ sysmenu() {
     esac
 }
 
-# Variable: $min_install (boolean t/f), $desktop (str), {$desktop_pkgs[@]} (array), $displaymgr (str)
+# Variable: $min_install (boolean t/f), $desktop (str), {$desktop_pkgs[@]} (array), $displaymgr (str). $setdesktop
 setdesktop() {
 	min_install=true
     	desktop=$(whiptail --title "Things to install / Desktop environment" --menu --nocancel "What desktop environment do you want?" 25 78 12 \
@@ -329,10 +331,11 @@ setdesktop() {
 	else
 		min_install=true
 	fi
+	setdesktop=true
 	desktopmenu
 }
 
-# Variable: $termemul
+# Variable: $termemul, $setterm
 settermemul() {
     termemul=$(whiptail --title "Things to install / Terminal emulator" --menu --nocancel "Which terminal emulator do you want?" 25 78 12 \
 		"alacritty" "A cross-platform, GPU-accelerated terminal emulator" \
@@ -347,6 +350,7 @@ settermemul() {
 		"yakuake" "Drop-down terminal based on Konsole" \
 		"zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
 		desktop_pkgs+=("$termemul")
+	setterm=true
     desktopmenu
 
 }
@@ -359,6 +363,10 @@ setaur() {
         	aurinstall=true
 	fi
  	desktopmenu
+}
+
+checkdesktopmenu() {
+
 }
 
 desktopmenu() {
@@ -386,12 +394,30 @@ configfile() {
 }
 
 installarch() {
-	{
-    	for ((i = 0 ; i <= 100 ; i+=1)); do
-        	sleep 0.05
-        	echo $i
-    	done
-	} | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by entering Alt+F2 (the tty2 console)." 8 50 0
+
+	if [[ "$setpart" = true && "$setkernel" = true && "$setuser" = true && "$setrootpasswd" = true && "$setsys" = true && "$setdesktop" = true && "$setdesktop" = true && "$setswap" = true ]]; then
+		confirm=$(whiptail --title "Are you ready?" --nocancel --yesno "Are you ready to install Arch Linux?\n\nThere is no going back if you choose 'I'm ready.'" --defaultno --yes-button "I'm ready" --no-button "WAIT..." 0 0 3>&1 1>&2 2>&3; echo $?)
+		if [[ $confirm -eq 0 ]]; then
+			confirm=$(whiptail --title "Are you ready?" --nocancel --yesno "ARE YOU SURE?\n\nThere really is no going back." --defaultno --yes-button "I'm sure" --no-button "Never mind" 0 0 3>&1 1>&2 2>&3; echo $?)
+			if [[ $confirm -eq 1 ]]; then
+				exit 0
+			else
+				{
+					for ((i = 0 ; i <= 100 ; i+=1)); do
+						sleep 0.05
+						echo $i
+					done
+				} | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by entering Alt+F2 (the tty2 console)." 8 50 0
+
+			fi
+		else
+			whiptail --title "Going back" --msgbox "Never mind then." 0 5
+			main
+		fi
+	else
+		whiptail --title "Something went wrong" --msgbox "You're missing some stuff. Check back at your configurations and come back here." 0 5
+		main
+	fi
 
 	whiptail --title "Installing Arch Linux..." --infobox "Here we go!" 8 35
 	sleep 3
@@ -503,7 +529,21 @@ NVIDIAHOOK
  	arch-chroot /mnt chpasswd <<<"root:$rootpasswd"
   	sleep 1
 	sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /mnt/etc/sudoers
-   	
+
+	if [[ "$aurinstall" = true ]]; then
+		whiptail --title "Installing Arch Linux..." --infobox "Installing the 'yay' AUR helper..." 8 35
+		pacstrap /mnt go
+		cat <<AURINSTALL > /mnt/aurinstall.sh
+su $username -c 'git -C /home/$username clone https://aur.archlinux.org/yay.git
+cd /home/$username/yay
+
+su $username -c 'makepkg'
+
+pacman -U /home/$username/yay/yay-*.pkg.tar.zst
+AURINSTALL
+		arch-chroot /mnt /bin/bash /aurinstall.sh
+	fi
+
    	whiptail --title "Installing Arch Linux..." --infobox "Installing and configuring GRUB..." 8 35
 	pacstrap /mnt grub dosfstools mtools os-prober efibootmgr &> /dev/tty2
 	arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=arch_grub --recheck &> /dev/tty2
@@ -547,7 +587,7 @@ NVIDIAHOOK
 		mkdir /mnt/etc/pacman.d/hooks
 		cp /mnt/install/nvidia.hook /mnt/etc/pacman.d/hooks/
 		sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"/' /mnt/etc/default/grub
-		cp -f /mnt/install/mkinitnvidia.conf /mnt/etc/mkinitcpio.conf
+		sed -i 's/^MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /mnt/etc/mkinitcpio.conf
 		arch-chroot /mnt mkinitcpio -P &> /dev/tty2
 		arch-chroot /mnt grub-mkconfig --output=/boot/grub/grub.cfg &> /dev/tty2
 	else
@@ -561,7 +601,7 @@ NVIDIAHOOK
 		whiptail --title "Installing Arch Linux..." --infobox "Installing desktop packages..." 8 35
 		pacstrap /mnt ${desktop_pkgs[@]} &> /dev/tty2
 		if [[ "$displaymgr" != "xorg-xinit" ]]; then
-			arch-chroot /mnt systemctl enable $displaymgr
+			arch-chroot /mnt systemctl enable $displaymgr &> /dev/tty2
 		fi
 	fi
 	sleep 1
