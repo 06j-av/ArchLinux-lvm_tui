@@ -279,7 +279,7 @@ sysmenu() {
 	fi
     choice=$(whiptail --title "System menu" --nocancel --menu "Select an option below using the UP/DOWN keys and ENTER." 20 80 10 \
 		"1" "< Back" \
-		"2" "Set the hostname" \
+		"2" "Set the \nhostname" \
 		"3" "Set the timezone" \
 		"4" "Set the locale" \
 		"5" "Set CPU microcode" \
