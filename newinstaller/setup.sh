@@ -194,6 +194,7 @@ selrootpasswd() {
 sethostname() {
     nameofhost=$(whiptail --title "System menu / Hostname" --nocancel --inputbox "What's going to be this system's hostname?" 0 0 3>&1 1>&2 2>&3)
     sethost=true
+    hostmenu="Hostname: $nameofhost"
     sysmenu
 }
 
@@ -207,6 +208,7 @@ settimezone() {
 	# Show the Whiptail menu and store the selected timezone
 	timezone=$(whiptail --title "System menu / Time zone" --menu --nocancel "What's your time zone?\n\nYou can use PgUp or PgDn to quickly scroll." 20 60 10 "${timezones_array[@]}" 3>&1 1>&2 2>&3)
 	settime=true
+	timemenu="Timezone: $timezone"
 	sysmenu
 }
 
@@ -225,6 +227,7 @@ setlocale() {
 		"pt_BR.UTF-8" "Portuguese (Brazil)" \
 		"ja_JP.UTF-8" "Japanese" 3>&1 1>&2 2>&3)
     setutf=true
+    localemenu="Locale: $locale"
     sysmenu
 }
 
@@ -234,6 +237,7 @@ setcpu() {
 		"amd" "Install microcode for AMD CPUs" \
 		"intel" "Install microcode for Intel CPUs" 3>&1 1>&2 2>&3)
     setmicrocode=true
+    cpumenu="Microcode: $cpumake-ucode"
     sysmenu
 }
 
@@ -254,6 +258,7 @@ setgpu() {
 		"nvidia-open-dkms" "Open-source NVIDIA driver for other kernels" \
 		"mesa" "Open-source Nouveau GPU drivers" 3>&1 1>&2 2>&3)
     setgpupkg=true
+    gpumenu="GPU driver: $gpupkg"
     sysmenu
 }
 
@@ -262,8 +267,10 @@ setswap() {
     swapspace=$(whiptail --title "System menu / Swap space" --nocancel --inputbox "Enter the size of your swap space in human-readable format.\n\nExamples:\n2G, 4G\n200M, 800M" 0 0 3>&1 1>&2 2>&3)
 	if [[ -z "$swapspace" ]]; then
 		setswap=false
+		swapmenu="No swap"
 	else
 		setswap=true
+		swapmenu="Swap: $swapspace swap file"
 	fi
 	sysmenu
 }
@@ -284,12 +291,12 @@ sysmenu() {
 	fi
     choice=$(whiptail --title "System menu" --nocancel --menu "Select an option below using the UP/DOWN keys and ENTER." 20 80 10 \
 		"1" "< Back" \
-		"2" "Set the hostname" \
-		"3" "Set the timezone" \
-		"4" "Set the locale" \
-		"5" "Set CPU microcode" \
-		"6" "Set GPU drivers" \
-		"7" "Set swap space" 3>&1 1>&2 2>&3)
+		"2" "$hostmenu" \
+		"3" "$timemenu" \
+		"4" "$localemenu" \
+		"5" "$cpumenu" \
+		"6" "$gpumenu" \
+		"7" "$swapmenu" 3>&1 1>&2 2>&3)
     case $choice in
         1) checksysmenu ;;
         2) sethostname ;;
@@ -335,9 +342,10 @@ setdesktop() {
 		"lxdm" "LXDE display manager" \
 		"xorg-xinit" "Start GUIs manually with startx/xinitrc" 3>&1 1>&2 2>&3)
 		desktop_pkgs+=("$displaymgr")
-
+		demenu="DE: $desktop | DM: $displaymgr"
 	else
 		min_install=true
+		demenu="DE: Minimal"
 	fi
 	setdedm=true
 	desktopmenu
@@ -359,6 +367,7 @@ settermemul() {
 		"zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
 		desktop_pkgs+=("$termemul")
 	setterm=true
+	termmenu="Term. emulator: $termemul"
     desktopmenu
 
 }
@@ -369,6 +378,9 @@ setaur() {
 	whiptail --title "Things to install / Install AUR helper" --yesno "Do you want to install yay to access packages in the Arch User Repository?." --defaultno --yes-button "Install" --no-button "Don't install" 0 0 3>&1 1>&2 2>&3
 	if [[ $? -eq 0 ]]; then
         	aurinstall=true
+        	aurmenu="Install AUR helper? (Y)"
+	else
+		aurmenu="Install AUR helper? (N)"
 	fi
  	desktopmenu
 }
@@ -385,9 +397,9 @@ checkdesktopmenu() {
 desktopmenu() {
     choice=$(whiptail --title "Things to install" --nocancel --menu "Select an option below using the UP/DOWN keys and ENTER." 20 80 10 \
 		"1" "< Back" \
-		"2" "Desktop environments" \
-		"3" "Terminal emulators" \
-		"4" "AUR helper" 3>&1 1>&2 2>&3)
+		"2" "$demenu" \
+		"3" "$termmenu" \
+		"4" "$aurmenu" 3>&1 1>&2 2>&3)
     case $choice in
         1) checkdesktopmenu ;;
         2) setdesktop ;;
@@ -401,7 +413,10 @@ configfile() {
     if [[ ! -z "$configfilepath" && -f "$configfilepath" ]]; then
         source $configfilepath
         configfilemenu="Using $configfilepath"
-    else
+
+	elif [[ ! -f "$configfilepath" ]]; then
+		whiptail --title "Something went wrong" --msgbox "This file doesn't exist!" 0 5
+    elif [[ -z "$configfilepath" ]]; then
         source $dir/setup.conf
         configfilemenu="Using default config file"
     fi
@@ -681,4 +696,19 @@ partmenu="Select partitions"
 kernelmenu="Select a kernel"
 rootmenu="Set the root password"
 configfilemenu="Use a configuration file..."
+
+namemenu="Enter your full name (optional)"
+usernamemenu="Enter your username"
+userpassmenu="Enter your password"
+
+hostmenu="Set the hostname"
+timemenu="Set the timezone"
+localemenu="Set the locale"
+cpumenu="Set the CPU microcode"
+gpumenu="Set GPU driver"
+swapmenu="Set swap space (optional)"
+
+demenu="Choose a DE + DM"
+termmenu="Choose a terminal emulator"
+aurmenu="Install AUR helper?"
 main_menu
