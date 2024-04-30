@@ -398,8 +398,7 @@ configfile() {
 }
 
 installarch() {
-
-	if [[ "$setpart" = true && "$setkernel" = true && "$setuser" = true && "$setrootpasswd" = true && "$setsys" = true && "$setdesktop" = true && "$setdesktop" = true && "$setswap" = true ]]; then
+	if [[ "$setpart" = true && "$setkernel" = true && "$setuser" = true && "$setrootpasswd" = true && "$setsys" = true && "$setdesktop" = true && "$setdesktop" = true ]]; then
 		confirm=$(whiptail --title "Are you ready?" --nocancel --yesno "Are you ready to install Arch Linux?\n\nThere is no going back if you choose 'I'm ready.'" --defaultno --yes-button "I'm ready" --no-button "WAIT..." 0 0 3>&1 1>&2 2>&3; echo $?)
 		if [[ $confirm -eq 0 ]]; then
 			confirm=$(whiptail --title "Are you ready?" --nocancel --yesno "ARE YOU SURE?\n\nThere really is no going back." --defaultno --yes-button "I'm sure" --no-button "Never mind" 0 0 3>&1 1>&2 2>&3; echo $?)
@@ -416,11 +415,11 @@ installarch() {
 			fi
 		else
 			whiptail --title "Going back" --msgbox "Never mind then." 0 5
-			main
+			main_menu
 		fi
 	else
 		whiptail --title "Something went wrong" --msgbox "You're missing some stuff. Check back at your configurations and come back here." 0 5
-		main
+		main_menu
 	fi
 
 	whiptail --title "Installing Arch Linux..." --infobox "Here we go!" 8 35
@@ -501,6 +500,7 @@ NVIDIAHOOK
 	sleep 1
 
 	whiptail --title "Getting things ready..." --infobox "Installing the base package..." 8 35
+	sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 	pacstrap /mnt base --noconfirm --needed &> /dev/tty2
 	sleep 1
 
@@ -626,7 +626,7 @@ exitoptions() {
 		"3" "Reboot the system" \
 		"4" "Chroot into installation" 3>&1 1>&2 2>&3)
 	case $choice in
-		1) exit 0 ;;
+		1) clear; exit 0 ;;
 		2) poweroff ;;
 		3) reboot ;;
 		4) arch-chroot /mnt ;;
