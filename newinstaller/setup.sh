@@ -459,32 +459,32 @@ installarch() {
 	whiptail --title "Installing Arch Linux..." --infobox "Here we go!" 8 35
 	sleep 3
 
-	if ! $formatefi; then
+	if [[ "$formatefi" = false ]]; then
 		whiptail --title "Partitioning" --infobox "The ESP has been untouched." 8 35
 		sleep 2
 	else
 		whiptail --title "Partitioning" --infobox "Formatting the EFI System partition..." 8 35
-		mkfs.fat -F32 $efipart > /dev/tty2 2>&1
-
+		mkfs.fat -F 32 $efipart &> /dev/tty2
+		sleep 2
 	fi
 
 	if [[ "$disklayout" = "lvm" ]]; then
 		whiptail --title "LVM setup" --infobox "Creating physical volume $rootpart..." 8 35
-		pvcreate $rootpart > /dev/tty2 2>&1
+		pvcreate $rootpart &> /dev/tty2
 		sleep 1
 
 		whiptail --title "LVM setup" --infobox "Creating volume group $vgname..." 8 35
-		vgcreate $vgname $rootpart > /dev/tty2 2>&1
+		vgcreate $vgname $rootpart &> /dev/tty2
 		sleep 1
 
 		whiptail --title "LVM setup" --infobox "Creating logical volume $lvname" 8 35
-		lvcreate -l 100%FREE $vgname -n $lvname > /dev/tty2 2>&1
+		lvcreate -l 100%FREE $vgname -n $lvname &> /dev/tty2
 		sleep 1
 
 		whiptail --title "LVM setup" --infobox "Finishing LVM setup..." 8 35
 		modprobe dm_mod
 		sleep 1
-		vgchange -ay > /dev/tty2 2>&1
+		vgchange -ay &> /dev/tty2
 		sleep 1
 		rootpath=/dev/$vgname/$lvname
 
@@ -492,7 +492,7 @@ installarch() {
 		mkfs.ext4 -q $rootpath
 		sleep 1
   		mount $rootpath /mnt
-    		sleep 1
+		sleep 1
 
 	elif [[ "$disklayout" = "basic" ]]; then
  		whiptail --title "Partitioning" --infobox "Formatting & mounting $rootpart..." 8 35
