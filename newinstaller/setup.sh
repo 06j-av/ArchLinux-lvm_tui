@@ -37,29 +37,31 @@ start() {
 # Variables: $efipart (str, /dev/ path), $formatefi (boolean t/f), $rootpart (str, /dev/ path)
 partconfig() {
     partitions=$(lsblk -npo NAME,FSTYPE,SIZE,PARTTYPENAME)
-	efipart=$(whiptail --title "Select partitions..." --nocancel --inputbox "Enter the path to the EFI partition.\n\nThis is usually the first partition on your disk.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
+	input=$(whiptail --title "Select partitions..." --nocancel --inputbox "Enter the path to the EFI partition.\n\nThis is usually the first partition on your disk.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
 	# Check if the ESP is a device file and a "EFI System" partition
-	if [[ -b "$efipart" && "$(lsblk -no TYPE "$efipart")"  == "part" && "$(lsblk -no PARTTYPENAME "$efipart")" = "EFI System" ]]; then
-		echo "$efipart is a valid ESP."
+	if [[ -b "$input" && "$(lsblk -no TYPE "$input")"  == "part" && "$(lsblk -no PARTTYPENAME "$input")" = "EFI System" ]]; then
+		echo "$input is a valid ESP."
 	else
-		whiptail --title "Something went wrong" --msgbox "$efipart is not a valid EFI System Partition." 0 0
+		whiptail --title "Something went wrong" --msgbox "$input is not a valid EFI System Partition." 0 0
 		main_menu
 	fi
-
+	efipart=$input
 	formatefi=false
 	whiptail --title "Format?" --yesno "Do you want to format $efipart?\n\nIf you are dual booting, we highly suggest NOT formatting the partition." --defaultno --yes-button "Format" --no-button "Don't format" 0 0 3>&1 1>&2 2>&3
 	if [[ $? -eq 0 ]]; then
         formatefi=true
     fi
-    rootpart=$(whiptail --title "Select partitions..." --nocancel --inputbox "You have selected $efipart as your EFI system partition.\n\Enter the path to your root partition.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
+    input2=$(whiptail --title "Select partitions..." --nocancel --inputbox "You have selected $efipart as your EFI system partition.\n\Enter the path to your root partition.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
-    if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart")" = "Linux LVM" ]]; then
-		echo "$rootpart is a valid root partition."
+    if [[ -b "$input2" && "$(lsblk -no TYPE "$input2")"  == "part" && "$(lsblk -no PARTTYPENAME "$input2")" = "Linux LVM" ]]; then
+		echo "$input2 is a valid root partition."
 	else
-		whiptail --title "Something went wrong" --msgbox "$rootpart is not a valid root partition." 0 0
+		whiptail --title "Something went wrong" --msgbox "$input2 is not a valid root partition." 0 0
 		main_menu
 	fi
+
+	rootpart=$input2
 
 	if [[ "$efipart" = "$rootpart" ]]; then
 		whiptail --title "Something went wrong" --msgbox "The ESP and root partition cannot be the same!" 0 0
@@ -67,7 +69,7 @@ partconfig() {
 	fi
 
     disklayout="basic"
-    whiptail --title "Disk layout" --yesno "What disk layout do you want to use for the root partition?\n\nBasic: Just a root partition, nothing else\n\LVM: Use Logical Volume Management" --defaultno --yes-button "Basic" --no-button "LVM" 0 0 3>&1 1>&2 2>&3
+    whiptail --title "Disk layout" --yesno "What disk layout do you want to use for the root partition?\n\nBasic: Just a root partition, nothing else\nLVM: Logical storage volumes stored on volume groups\nthat combine multiple disks\n\nSelecting LVM will use $rootpart as the root logical volume." --defaultno --yes-button "Basic" --no-button "LVM" 0 0 3>&1 1>&2 2>&3
     if [[ $? -eq 1 ]]; then
         disklayout="lvm"
         vgname=$(whiptail --title "LVM setup" --nocancel --inputbox "Name the volume group:" 0 0 3>&1 1>&2 2>&3)
