@@ -121,7 +121,7 @@ setusername() {
             else
                 good_input=true
                 username="$input"
-                usernamemenu="$username"
+                usernamemenu="Username: $username"
             fi
         else
             whiptail --title "Something went wrong" --msgbox "The username you entered ($input) is invalid.\n\nThe username must start with a lower-case letter, which can be followed by any number, letter, or dash symbol. It cannot be over 32 characters long." 2 15
