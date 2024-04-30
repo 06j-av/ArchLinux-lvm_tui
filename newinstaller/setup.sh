@@ -78,7 +78,7 @@ partconfig() {
 
 # Variable: $linuxkernel
 selkernel() {
-    linuxkernel=$(whiptail --title "Select a kernel" --nocancel --menu "Choose the kernel that you want to install." 20 70 4 3>&1 1>&2 2>&3 \
+    linuxkernel=$(whiptail --title "Select a kernel" --nocancel --menu "Choose the kernel that you want to install." 20 70 6 3>&1 1>&2 2>&3 \
  	"linux" "The vanilla Linux kernel" \
    	"linux-lts" "Long-term (LTS) Linux kernel" \
    	"linux-hardened" "A security-focused Linux kernel" \
@@ -108,7 +108,7 @@ setusername() {
         input=$(whiptail --title "Username" --nocancel --inputbox "Rules for a username:\n\nMust start with a lower-case letter\nCan be followed by any number, letter, or the dash symbol\nCannot be over 32 characters long\n\nEnter a username:" 0 0 3>&1 1>&2 2>&3)
         if printf "%s" "$input" | grep -Eoq "^[a-z][a-z0-9-]*$" && [ "${#input}" -lt 33 ]; then
             if grep -Fxq "$input" "$dir/reserved-users.txt"; then
-                whiptail --title "Something went wrong" --msgbox "The username you entered ($input) is or will potentially be reserved for system use. Please select a different one." 2 15
+                whiptail --title "Something went wrong" --msgbox "The username you entered ($input) is or will potentially be reserved for system use. Please select a different one." 0 0
             else
                 good_input=true
                 username="$input"
@@ -128,9 +128,9 @@ setuserpasswd() {
         input=$(whiptail --passwordbox --nocancel "Enter the password for $username:" 8 78 --title "User password" 3>&1 1>&2 2>&3)
         confirm=$(whiptail --passwordbox --nocancel "Re-enter password to verify:" 8 78 --title "User password" 3>&1 1>&2 2>&3)
         if [ -z "$userpasswd" ]; then
-            whiptail --title "Something went wrong" --msgbox "You can't have an empty password." 2 15
+            whiptail --title "Something went wrong" --msgbox "You can't have an empty password." 0 0
         elif [ "$confirm" != "$userpasswd" ]; then
-            whiptail --title "Something went wrong" --msgbox "The two passwords didn't match!" 2 15
+            whiptail --title "Something went wrong" --msgbox "The two passwords didn't match!" 0 0
         else
             userpasswd="$input"
             good_input=true
