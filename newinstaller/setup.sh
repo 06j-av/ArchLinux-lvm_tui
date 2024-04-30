@@ -93,6 +93,7 @@ selkernel() {
    	"linux-rt-lts" "The LTS realtime Linux kernel" \
    	"linux-zen" "The linux-zen Linux kernel")
     setkernel=true
+    kernelmenu="Kernel: $linuxkernel"
     main_menu
 }
 
@@ -399,8 +400,10 @@ configfile() {
     configfilepath=$(whiptail --title "Preset configuration file" --nocancel --inputbox "Enter the path to your configuration file.\n\nThere's a template included in the cloned repository named 'setup.conf'. If no valid file path is provided,\nthat will be the default." 0 0 3>&1 1>&2 2>&3)
     if [[ ! -z "$configfilepath" && -f "$configfilepath" ]]; then
         source $configfilepath
+        configfilemenu="Using $configfilepath"
     else
         source $dir/setup.conf
+        configfilemenu="Using default config file"
     fi
     main_menu
 }
@@ -645,13 +648,13 @@ exitoptions() {
 main_menu() {
     choice=$(whiptail --title "Main Menu" --nocancel --menu "Select an option below using the UP/DOWN keys and ENTER." 20 80 10 \
 		"1" "$partmenu" \
-		"2" "Select a kernel" \
+		"2" "$kernelmenu" \
 		"3" "Create your user account >" \
-		"4" "Set the root password" \
+		"4" "$rootmenu" \
 		"5" "System settings >" \
 		"6" "Choose some things to install... >" \
 		"7" "Install Arch Linux" \
-		"8" "Use a configuration file..." \
+		"8" "$configfilemenu" \
 		"9" "Exit installer" 3>&1 1>&2 2>&3)
     case $choice in
         1) partconfig ;;
@@ -676,4 +679,6 @@ setdesktop=false
 
 partmenu="Select partitions"
 kernelmenu="Select a kernel"
+rootmenu="Set the root password"
+configfilemenu="Use a configuration file..."
 main_menu
