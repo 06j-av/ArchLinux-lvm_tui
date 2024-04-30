@@ -16,13 +16,12 @@ start() {
         exit 1
     fi
     UEFI=false
-    ARCHIS64=false
     whiptail --title "Just a couple things first..." --infobox "Checking your firmware..." 8 35
     if [ -d /sys/firmware/efi ]; then
         UEFI=true
     fi
     if ! $UEFI; then
-        whiptail --title "Unsupported firmware" --msgbox "This installation script only supports UEFI firmware.\n\nCould it be that you booted in BIOS mode?\n\nIf not, you cannot run the installer with the current firmware." 2 15
+        whiptail --title "Unsupported firmware" --msgbox "This installation script only supports UEFI firmware.\n\nCould it be that you booted in BIOS mode?\nIf not, you cannot run the installer with the current firmware." 2 15
         exit 1
     fi
 
@@ -296,7 +295,7 @@ sysmenu() {
 # Variable: $min_install (boolean t/f), $desktop (str), {$desktop_pkgs[@]} (array), $displaymgr (str). $setdesktop
 setdesktop() {
 	min_install=true
-    	desktop=$(whiptail --title "Things to install / Desktop environment" --menu --nocancel "What desktop environment do you want?" 25 78 12 \
+	desktop=$(whiptail --title "Things to install / Desktop environment" --menu --nocancel "What desktop environment do you want?" 25 78 12 \
 	"budgie" "Install the Budgie desktop environment" \
 	"cinnamon" "Install the Cinnamon desktop environment" \
 	"gnome" "Install the GNOME desktop environment" \
@@ -331,7 +330,7 @@ setdesktop() {
 	else
 		min_install=true
 	fi
-	setdesktop=true
+	setdedm=true
 	desktopmenu
 }
 
@@ -366,7 +365,12 @@ setaur() {
 }
 
 checkdesktopmenu() {
-
+	if [[ "$setdedm" = true && "$setterm" = true ]]; then
+        setdesktop=true
+        main_menu
+    else
+        main_menu
+    fi
 }
 
 desktopmenu() {
