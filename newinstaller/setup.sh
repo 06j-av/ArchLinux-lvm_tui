@@ -76,6 +76,10 @@ partconfig() {
         lvname=$(whiptail --title "LVM setup" --nocancel --inputbox "Name the root logical volume:" 0 0 3>&1 1>&2 2>&3)
     fi
     setpart=true
+    case $formatefi in
+		"false") partmenu="ESP: $efipart | Root: $rootpart | Layout: $disklayout" ;;
+		"true") partmenu="ESP: $efipart (Format) | Root: $rootpart | Layout: $disklayout" ;;
+    esac
     main_menu
 }
 
@@ -279,7 +283,7 @@ sysmenu() {
 	fi
     choice=$(whiptail --title "System menu" --nocancel --menu "Select an option below using the UP/DOWN keys and ENTER." 20 80 10 \
 		"1" "< Back" \
-		"2" "Set the \nhostname" \
+		"2" "Set the hostname" \
 		"3" "Set the timezone" \
 		"4" "Set the locale" \
 		"5" "Set CPU microcode" \
@@ -640,7 +644,7 @@ exitoptions() {
 
 main_menu() {
     choice=$(whiptail --title "Main Menu" --nocancel --menu "Select an option below using the UP/DOWN keys and ENTER." 20 80 10 \
-		"1" "Select partitions" \
+		"1" "$partmenu" \
 		"2" "Select a kernel" \
 		"3" "Create your user account >" \
 		"4" "Set the root password" \
@@ -669,4 +673,7 @@ setuser=false
 setrootpasswd=false
 setsys=false
 setdesktop=false
+
+partmenu="Select partitions"
+kernelmenu="Select a kernel"
 main_menu
