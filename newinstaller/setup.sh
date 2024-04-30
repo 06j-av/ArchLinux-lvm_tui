@@ -30,6 +30,7 @@ start() {
         whiptail --title "Unsupported architecture" --msgbox "This installation script only supports the x86_64 architecture.\n\nYou cannot run the installer with the current system architecture." 2 15
         exit 1
     fi
+    sleep 1
     whiptail --title "Supported system" --msgbox "Your system's all good! Let's proceed." 0 5
 }
 
@@ -42,7 +43,7 @@ partconfig() {
 	if [[ -b "$efipart" && "$(lsblk -no TYPE "$efipart")"  == "part" && "$(lsblk -no PARTTYPENAME "$efipart" = "EFI System" )" ]]; then
 		echo "$efipart is a valid ESP."
 	else
-		whiptail --title "Something went wrong" --msgbox "$efipart is not a valid EFI System Partition." 2 15
+		whiptail --title "Something went wrong" --msgbox "$efipart is not a valid EFI System Partition." 0 0
 		exit 1
 	fi
 
@@ -56,12 +57,12 @@ partconfig() {
     if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart" = "Linux LVM" )" ]]; then
 		echo "$rootpart is a valid root partition."
 	else
-		whiptail --title "Something went wrong" --msgbox "$rootpart is not a valid root partition." 2 15
+		whiptail --title "Something went wrong" --msgbox "$rootpart is not a valid root partition." 0 0
 		exit 1
 	fi
 
 	if [[ "$efipart" = "$rootpart" ]]; then
-		whiptail --title "Something went wrong" --msgbox "The ESP and root partition cannot be the same!" 2 15
+		whiptail --title "Something went wrong" --msgbox "The ESP and root partition cannot be the same!" 0 0
 		exit 1
 	fi
 
@@ -170,9 +171,9 @@ selrootpasswd() {
         input=$(whiptail --passwordbox --nocancel "Enter the password for root:" 8 78 --title "User password" 3>&1 1>&2 2>&3)
         confirm=$(whiptail --passwordbox --nocancel "Re-enter password to verify:" 8 78 --title "User password" 3>&1 1>&2 2>&3)
         if [ -z "$input" ]; then
-            whiptail --title "Something went wrong" --msgbox "You can't have an empty password." 2 15
+            whiptail --title "Something went wrong" --msgbox "You can't have an empty password." 0 0
         elif [ "$confirm" != "$input" ]; then
-            whiptail --title "Something went wrong" --msgbox "The two passwords didn't match!" 2 15
+            whiptail --title "Something went wrong" --msgbox "The two passwords didn't match!" 0 0
         else
             rootpasswd="$input"
             good_input=true
@@ -404,14 +405,15 @@ installarch() {
 		if [[ $confirm -eq 0 ]]; then
 			confirm=$(whiptail --title "Are you ready?" --nocancel --yesno "ARE YOU SURE?\n\nThere really is no going back." --defaultno --yes-button "I'm sure" --no-button "Never mind" 0 0 3>&1 1>&2 2>&3; echo $?)
 			if [[ $confirm -eq 1 ]]; then
-				exit 0
+				whiptail --title "Going back" --msgbox "Never mind then." 0 5
+				main_menu
 			else
 				{
 					for ((i = 0 ; i <= 100 ; i+=1)); do
 						sleep 0.05
 						echo $i
 					done
-				} | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by entering Alt+F2 (the tty2 console)." 8 50 0
+				} | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by typing Alt+F2 (the tty2 console)." 8 50 0
 
 			fi
 		else
@@ -659,4 +661,10 @@ main_menu() {
 }
 
 start
+setpart=false
+setkernel=false
+setuser=false
+setrootpasswd=false
+setsys=false
+setdesktop=false
 main_menu
