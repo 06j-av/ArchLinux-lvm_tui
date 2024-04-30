@@ -21,7 +21,7 @@ start() {
         UEFI=true
     fi
     if ! $UEFI; then
-        whiptail --title "Unsupported firmware" --msgbox "This installation script only supports UEFI firmware.\n\nCould it be that you booted in BIOS mode?\nIf not, you cannot run the installer with the current firmware." 2 15
+        whiptail --title "Unsupported firmware" --msgbox "This installation script only supports UEFI firmware.\n\nCould it be that you booted in BIOS mode?\nYou cannot run the installer with BIOS firmware." 2 15
         exit 1
     fi
 
@@ -40,11 +40,11 @@ partconfig() {
 	efipart=$(whiptail --title "Select partitions..." --nocancel --inputbox "Enter the path to the EFI partition.\n\nThis is usually the first partition on your disk.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
 	# Check if the ESP is a device file and a "EFI System" partition
-	if [[ -b "$efipart" && "$(lsblk -no TYPE "$efipart")"  == "part" && "$(lsblk -no PARTTYPENAME "$efipart" = "EFI System" )" ]]; then
+	if [[ -b "$efipart" && "$(lsblk -no TYPE "$efipart")"  == "part" && "$(lsblk -no PARTTYPENAME "$efipart")" = "EFI System" ]]; then
 		echo "$efipart is a valid ESP."
 	else
 		whiptail --title "Something went wrong" --msgbox "$efipart is not a valid EFI System Partition." 0 0
-		exit 1
+		main_menu
 	fi
 
 	formatefi=false
@@ -54,16 +54,16 @@ partconfig() {
     fi
     rootpart=$(whiptail --title "Select partitions..." --nocancel --inputbox "You have selected $efipart as your EFI system partition.\n\Enter the path to your root partition.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
-    if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart" = "Linux LVM" )" ]]; then
+    if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart")" = "Linux LVM" ]]; then
 		echo "$rootpart is a valid root partition."
 	else
 		whiptail --title "Something went wrong" --msgbox "$rootpart is not a valid root partition." 0 0
-		exit 1
+		main_menu
 	fi
 
 	if [[ "$efipart" = "$rootpart" ]]; then
 		whiptail --title "Something went wrong" --msgbox "The ESP and root partition cannot be the same!" 0 0
-		exit 1
+		main_menu
 	fi
 
     disklayout="basic"
