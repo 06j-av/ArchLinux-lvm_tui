@@ -54,7 +54,7 @@ partconfig() {
     fi
     input2=$(whiptail --title "Select partitions..." --nocancel --inputbox "You have selected $efipart as your EFI system partition.\n\Enter the path to your root partition.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
-    if [[ -b "$input2" && "$(lsblk -no TYPE "$input2")"  == "part" && "$(lsblk -no PARTTYPENAME "$input2")" = "Linux LVM" ]]; then
+    if [[ -b "$input2" && "$(lsblk -no TYPE "$input2")"  == "part" && "$(lsblk -no PARTTYPENAME "$input2")" = "Linux LVM" || "$(lsblk -no PARTTYPENAME "$input2")" = "Linux filesystem" ]]; then
 		echo "$input2 is a valid root partition."
 	else
 		whiptail --title "Something went wrong" --msgbox "$input2 is not a valid root partition." 0 0
@@ -160,9 +160,6 @@ checkusermenu() {
     fi
 }
 
-# namemenu="Enter your full name (optional)"
-# usernamemenu="Enter your username"
-# userpassmenu="Enter your password"
 usermenu() {
     choice=$(whiptail --title "User menu" --nocancel --menu "Select an option below using the UP/DOWN keys and ENTER." 20 80 10 \
 		"1" "< Back" \
@@ -538,8 +535,18 @@ NVIDIAHOOK
 	pacstrap /mnt base --noconfirm --needed &> /dev/tty2
 	sleep 1
 
+ 	if [[ $? -ne 0 ]]; then
+		whiptail --title "Something went wrong" --msgbox "Pacstrap couldn't install the package.\n\nYou'll need to troubleshoot this and reset your partitions." 0 5
+  		exit 10
+  	fi
+
  	whiptail --title "Installing Arch Linux..." --infobox "Installing the Linux kernel and other tools..." 8 35
 	pacstrap /mnt $linuxkernel $linuxkernel-headers linux-firmware base-devel git neofetch zip $cpumake-ucode networkmanager neovim wpa_supplicant wireless_tools netctl dialog bluez bluez-utils ntfs-3g &> /dev/tty2
+
+ 	if [[ $? -ne 0 ]]; then
+		whiptail --title "Something went wrong" --msgbox "Pacstrap couldn't install the package.\n\nYou'll need to troubleshoot this and reset your partitions." 0 5
+  		exit 10
+  	fi
 
 	whiptail --title "Installing Arch Linux..." --infobox "Enabling Network Manager..." 8 35
 	arch-chroot /mnt systemctl enable NetworkManager &> /dev/tty2
