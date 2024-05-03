@@ -58,6 +58,8 @@ You can use a configuration file with the installer to speed up the setup proces
 
 When you're in the Arch ISO environment (or if you are going to copy your setup), create a file using your favorite text editor.
 
+A config file template is included and you can modify it to your preferences.
+
 You'll need these variables in the config file:
    - This will be your EFI system partition (/dev/[partfile]):
      ```
