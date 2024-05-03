@@ -155,13 +155,9 @@ And your configuration is all set! Just make sure you confirm that you have a co
 ## Next steps
 This can be seen in the `newinstaller/` directory on this repository.
 
-- Revamped menu or something like that
-- Support for configuration files to skip the whole menu-by-menu process
-   - For what I have in mind, it's basically just setting the variables yourself
-- Adding additional applications (extra packages to install during the installation)
-- More kernels
-   - I might just add the kernels that are officially supported according to the [ArchWiki](https://wiki.archlinux.org/title/Kernel#Officially_supported_kernels).
-- Addition to basic layout (just the partition) and LVM + LUKS encryption
+- ~~Support for configuration files to skip the whole menu-by-menu process~~
+   - ~~For what I have in mind, it's basically just setting the variables yourself~~
+- Adding LVM + LUKS encryption disk layout
 - Install the AUR helper for access to the Arch User Repository
    - Likely `yay`
 - Add multiple users
