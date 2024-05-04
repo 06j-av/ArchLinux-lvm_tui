@@ -66,7 +66,7 @@ checkefi() {
 }
 
 checkrootpart() {
-    if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart")" = "EFI System" ]]; then
+    if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart")" = "Linux LVM" || "$(lsblk -no PARTTYPENAME "$rootpart")" = "Linux filesystem" ]]; then
         echo "$rootpart is a valid ESP."
     else
         whiptail --title "Something went wrong" --msgbox "$rootpart is not a valid root partition." 0 0
