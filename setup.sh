@@ -218,7 +218,7 @@ configsys() {
     agree=false
     while ! $agree; do
         # Show the Whiptail menu and store the selected timezone
-        host=$(whiptail --title "System menu / Hostname" --nocancel --inputbox "What's going to be this system's hostname?" 0 0 3>&1 1>&2 2>&3)
+        host=$(whiptail --title "Hostname" --nocancel --inputbox "What's going to be this system's hostname?" 0 0 3>&1 1>&2 2>&3)
         whiptail --title "Just to confirm..." --yesno "Your hostname will be $host.\n\nIs that correct?"  0 0 3>&1 1>&2 2>&3
         if [[ $? -eq 0 ]]; then
             agree=true
@@ -246,7 +246,7 @@ configsys() {
 
     agree=false
     while ! $agree; do
-        locale=$(whiptail --title "System menu / Locale" --nocancel --menu "What's your locale?" 20 80 10 \
+        locale=$(whiptail --title "Locale" --nocancel --menu "What's your locale?" 20 80 10 \
 		"en_US.UTF-8" "English (United States)" \
 		"en_AU.UTF-8" "English (Australia)" \
 		"en_CA.UTF-8" "English (Canada)" \
@@ -268,7 +268,7 @@ configsys() {
 
     agree=false
     while ! $agree; do
-        cpumake=$(whiptail --title "System menu / CPU" --nocancel --menu "What's your locale?" 20 80 10 \
+        cpumake=$(whiptail --title "CPU microcode" --nocancel --menu "What's your locale?" 20 80 10 \
 		"amd" "Install microcode for AMD CPUs" \
 		"intel" "Install microcode for Intel CPUs" 3>&1 1>&2 2>&3)
 		whiptail --title "Just to confirm..." --yesno "The microcode that fits your CPU is $cpumake-ucode.\n\nIs that correct?"  0 0 3>&1 1>&2 2>&3
@@ -288,7 +288,7 @@ configsys() {
         elif [[ "$linuxkernel" != "linux" && "$linuxkernel" != "linux-lts" ]]; then
             recommended="nvidia-dkms or nvidia-open-dkms"
         fi
-        gpupkg=$(whiptail --title "System menu / GPU" --nocancel --menu "Which GPU package fits best for your GPU?\n\nFor NVIDIA GPUs, $recommended likely fits best for your kernel." 20 80 10 \
+        gpupkg=$(whiptail --title "GPU driver" --nocancel --menu "Which GPU package fits best for your GPU?\n\nFor NVIDIA GPUs, $recommended likely fits best for your kernel." 20 80 10 \
             "nvidia" "Proprietary NVIDIA driver for 'linux'" \
             "nvidia-lts" "Proprietary NVIDIA driver for 'linux-lts'" \
             "nvidia-dkms" "Proprietary NVIDIA driver for other kernels" \
@@ -308,7 +308,7 @@ configsys() {
     while ! $agree; do
         whiptail --title "Set swap?" --yesno "Do you want to set up a swap file?\n\nSwap is part of disk space that is used as extra memory for\nthe system.\n\nThis will be a file, not a partition."  0 0 3>&1 1>&2 2>&3
         if [[ $? -eq 0 ]]; then
-            swapspace=$(whiptail --title "System menu / Swap space" --nocancel --inputbox "Enter the size of your swap space in human-readable format.\n\nExamples:\n2G, 4G\n200M, 800M\n\nOnly KiB, MiB, or GiB-sized files are supported." 0 0 3>&1 1>&2 2>&3)
+            swapspace=$(whiptail --title "Swap space" --nocancel --inputbox "Enter the size of your swap space in human-readable format.\n\nExamples:\n2G, 4G\n200M, 800M\n\nOnly KiB, MiB, or GiB-sized files are supported." 0 0 3>&1 1>&2 2>&3)
             checkswap
             whiptail --title "Just to confirm..." --yesno "You want a $swapspace-sized swap file.\n\nIs that correct?"  0 0 3>&1 1>&2 2>&3
             if [[ $? -eq 0 ]]; then
@@ -375,10 +375,22 @@ desktop() {
             "terminology" "Terminal emulator by the Enlightenment project team" \
             "xterm" "Simple terminal emulator for the X Window System" \
             "yakuake" "Drop-down terminal based on Konsole" \
-            "zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)\
+            "zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
             desktop_pkgs+=("$termemul")
+            browser=$(whiptail --title "Things to install / Terminal emulator" --menu --nocancel "Which terminal emulator do you want?" 25 78 12 \
+            "skip" "Install a browser later" \
+            "firefox" "Standalone web browser from mozilla.org" \
+            "chromium" "THe open source project behind Google Chrome" \
+            "vivaldi" "An advanced browser made with the power user in mind" \
+            "falkon" "Web browser based on QtWebEngine" \
+            "konqueror" "KDE web browser" \
+            "epiphany" "The GNOME Web browser" 3>&1 1>&2 2>&3)
 
-            whiptail --title "Just to confirm..." --yesno "The main desktop packages you want to install are $desktoppkg, $displaymgr, and $termemul.\n\nIs that correct?"  0 0 3>&1 1>&2 2>&3
+            if [[ "$browser" != "skip" ]]; then
+                desktop_pkgs+=("$browser")
+            fi
+
+            whiptail --title "Just to confirm..." --yesno "You want a desktop environment along with a display manager and other programs.\n\nIs that correct?"  0 0 3>&1 1>&2 2>&3
             if [[ $? -eq 0 ]]; then
                 agree=true
             else
@@ -556,6 +568,9 @@ installarch() {
 		sleep 1
  	fi
 
+    whiptail --title "Partitioning" --infobox "Mounting $efipart..." 8 35
+ 	mount --mkdir $efipart /mnt/boot/efi
+ 	sleep 1
 
  	pacstrap_pkgs=("base" "$linuxkernel" "$linuxkernel-headers" "linux-firmware" "base-devel" "zip" "unzip" "$cpumake-ucode" "networkmanager" "neovim" "wpa_supplicant" "wireless_tools" "netctl" "dialog" "bluez" "bluez-utils" "ntfs-3g" "grub" "efibootmgr" "mtools" "os-prober" "man-db" "pipewire" "lib32-pipewire" "wireplumber" "pipewire-pulse" "pipewire-alsa" "pipewire-jack" "lib32-pipewire-jack")
 
@@ -596,7 +611,7 @@ NVIDIAHOOK
 	sed -i "/\[multilib\]/,/Include/"'s/^#//' /etc/pacman.conf
 	pacstrap /mnt ${pacstrap_pkgs[@]} &> /dev/tty2
 	if [[ $? -ne 0 ]]; then
-		whiptail --title "Something went wrong" --msgbox "Pacstrap couldn't install the necessary packages.\n\nIt could be from corrupted pacman keys (run pacman-key --init)\nor another issue." 0 5
+		whiptail --title "Something went wrong" --msgbox "Pacstrap couldn't install the packages.\n\nIt could be from corrupted pacman keys (run pacman-key --init)\nor another issue." 0 5
   		exit 10
   	fi
 
@@ -606,7 +621,6 @@ NVIDIAHOOK
 	mkdir /mnt/install
  	cp $dir/installfiles/* /mnt/install/
  	genfstab -U /mnt >> /mnt/etc/fstab
- 	mount --mkdir $efipart /mnt/boot/efi
     sleep 1
 
 	sleep 1
@@ -682,12 +696,12 @@ NVIDIAHOOK
 
 	if [[ "$makeswap" = true ]]; then
 		whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
-		mkswap -U clear --size $swapspace --file /swapfile > /dev/tty2
-		swapon /swapfile
-		echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
-		mount -a
-		swapon -a
-
+		arch-chroot /mnt mkswap -U clear --size $swapspace --file /swapfile &> /dev/tty2
+		arch-chroot /mnt swapon /swapfile
+		echo '/swapfile none swap sw 0 0' | tee -a /mnt/etc/fstab
+		arch-chroot /mnt mount -a
+		arch-chroot /mnt swapon -a
+		sleep 1
 	fi
 
     rm -rf /mnt/install
