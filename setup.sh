@@ -341,7 +341,7 @@ desktop() {
         "lxde" "Install the LXDE desktop environment" \
         "lxqt" "Install the LXQt desktop environment" \
         "mate" "Install the MATE desktop environment" \
-        "plasma-meta" "Install the KDE Plasma desktop environment" \
+        "plasma" "Install the KDE Plasma desktop environment" \
         "xfce4" "Install the Xfce desktop environment" \
         "i3" "Install the i3 window manager" \
         "sway" "Install the Sway window manager" \
@@ -349,7 +349,7 @@ desktop() {
         if [[ "$desktoppkg" != "No DE" ]]
         then
             min_install=false
-            desktop_pkgs=("xorg-server" "$desktop")
+            desktop_pkgs=("xorg-server" "$desktoppkg")
             if [[ "$desktop" = "cinnamon" ]]; then
                 desktop_pkgs+=("metacity")
             elif [[ "$desktop" = "lxqt" ]]; then
@@ -572,13 +572,6 @@ installarch() {
 		sleep 1
  	fi
 
- 	whiptail --title "Getting things ready..." --infobox "Preparing some stuff..." 8 35
-	mkdir /mnt/install
- 	cp $dir/installfiles/* /mnt/install/
- 	genfstab -U /mnt >> /mnt/etc/fstab
- 	mount --mkdir $efipart /mnt/boot/efi
-    sleep 1
-
 
  	pacstrap_pkgs=("base" "$linuxkernel" "$linuxkernel-headers" "linux-firmware" "base-devel" "zip" "unzip" "$cpumake-ucode" "networkmanager" "neovim" "wpa_supplicant" "wireless_tools" "netctl" "dialog" "bluez" "bluez-utils" "ntfs-3g" "grub" "efibootmgr" "mtools" "os-prober" "man-db" "pipewire" "lib32-pipewire" "wireplumber" "pipewire-pulse" "pipewire-alsa" "pipewire-jack" "lib32-pipewire-jack")
 
@@ -613,8 +606,6 @@ NVIDIAHOOK
         pacstrap_pkgs+=(${desktop_pkgs[@]})
  	fi
 
- 	echo ${pacstrap_pkgs[@]}
-
     sleep 1
 
  	whiptail --title "Installing Arch Linux..." --infobox "Installing packages..." 8 35
@@ -624,6 +615,15 @@ NVIDIAHOOK
 		whiptail --title "Something went wrong" --msgbox "Pacstrap couldn't install the necessary packages.\n\nIt could be from corrupted pacman keys (run pacman-key --init)\nor another issue." 0 5
   		exit 10
   	fi
+
+  	sleep 1
+
+  	whiptail --title "Getting things ready..." --infobox "Preparing some stuff..." 8 35
+	mkdir /mnt/install
+ 	cp $dir/installfiles/* /mnt/install/
+ 	genfstab -U /mnt >> /mnt/etc/fstab
+ 	mount --mkdir $efipart /mnt/boot/efi
+    sleep 1
 
 	sleep 1
 
@@ -695,6 +695,16 @@ NVIDIAHOOK
 	whiptail --title "Installing Arch Linux..." --infobox "Blacklisting the PC speaker..." 8 35
 	echo -e "blacklist pcspkr\nblacklist snd_pcsp" > /mnt/etc/modprobe.d/nobeep.conf
 	sleep 1
+
+	if [[ "$makeswap" = true ]]; then
+		whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
+		mkswap -U clear --size $swapspace --file /swapfile > /dev/tty2
+		swapon /swapfile
+		echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab
+		mount -a
+		swapon -a
+
+	fi
 
     rm -rf /mnt/install
 }
