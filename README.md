@@ -1,4 +1,4 @@
-# Arch Linux Installation with LVM Setup (Terminal User Interface)
+# Arch Linux auto install (with a terminal user interface!)
 
 This script automates the installation process of Arch Linux with Logical Volume Management (LVM) and uses a terminal user interface with `whiptail`. It is designed to make the installation steps more simpler for incoming Arch Linux users.
 
