@@ -5,7 +5,7 @@ This script automates the installation process of Arch Linux with Logical Volume
 This is a **Terminal User Interface** variant of the [text-based installer](https://github.com/06j-av/archlinux-installScript-LVM) that I likely will not even touch anymore because this one is much better than the other one (at least in my opinion).
 
 ## Some stuff you need to know
-- This script is **in testing**. It is only public so I can test this in a virtual machine, but it mostly works! :p
+- This script is **in testing**, but it mostly works!
 - This script will only make __one__ user.
    - You'll have to add extra users yourself when you reboot into the installation.
 
