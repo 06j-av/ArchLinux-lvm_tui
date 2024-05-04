@@ -527,10 +527,6 @@ installarch() {
                 done
             } | whiptail --gauge "Installation will begin once this finishes...\n\nYou can see what's happening by typing Alt+F2 (the tty2 console)." 10 50 0
         fi
-        else
-            whiptail --title "Going back" --msgbox "Never mind then.\n\nGood bye!" 0 5
-            exit 0
-        fi
     else
         whiptail --title "Going back" --msgbox "Never mind then.\n\nGood bye!" 0 5
         exit 0
