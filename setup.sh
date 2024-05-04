@@ -113,7 +113,7 @@ partition() {
     while ! $agree; do
         efipart=$(whiptail --title "Select partitions..." --nocancel --inputbox "Enter the path to the EFI partition.\n\nThis is usually the first partition on your disk.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
-        #checkefi
+        checkefi
 
         formatefi=false
         whiptail --title "Format?" --yesno "Do you want to format $efipart?\n\nIf you are dual booting, we highly suggest NOT formatting the partition." --defaultno --yes-button "Format" --no-button "Don't format" 0 0 3>&1 1>&2 2>&3
@@ -122,7 +122,7 @@ partition() {
         fi
         rootpart=$(whiptail --title "Select partitions..." --nocancel --inputbox "You have selected $efipart as your EFI system partition.\n\Enter the path to your root partition.\n\n$partitions" 0 0 3>&1 1>&2 2>&3)
 
-        #checkrootpart
+        checkrootpart
 
         if [[ "$efipart" = "$rootpart" ]]; then
             whiptail --title "Something went wrong" --msgbox "The ESP and root partition cannot be the same!" 0 0
@@ -421,35 +421,18 @@ checkconfigfile() {
     whiptail --title "Just a moment..." --infobox "We're reviewing your config file..." 8 35
     echo "We're reviewing your config file..."
     checkvars
-    #checkefi
-    echo $efipart $formatefi
+    checkefi
     sleep 1
-    #checkrootpart
-    echo $rootpart $disklayout
-    echo $vgname $lvmame
+    checkrootpart
     sleep 1
     checkusername
     sleep 1
-    echo $username $usename $name
     checkpasswd $userpasswd
-    echo $userpasswd
     sleep 1
     checkpasswd $rootpasswd
-    echo $rootpasswd
-    sleep 1
-    echo $host
-    sleep 1
-    echo $timezone
-    sleep 1
-    echo $cpumake
-    sleep 1
-    echo $gpupkg
     sleep 1
     checkswap
-    echo $swapspace $makeswap
     sleep 1
-    echo ${desktop_pkgs[@]}
-
 }
 
 configfile() {
