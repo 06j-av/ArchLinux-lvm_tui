@@ -164,7 +164,7 @@ And your configuration is all set! Just make sure you confirm that you have a co
 - Install an AUR helper for access to the Arch User Repository
    - Likely `yay`
 - Add multiple users
-
+- **(This is a long shot)** Making a custom Arch ISO that runs this script
 `At this point this might just turn into the official archinstall program that's included in the live ISO but it has LVM setup support soooooo yay!!!!`
 
 ## Notes
