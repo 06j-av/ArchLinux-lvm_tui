@@ -376,6 +376,7 @@ desktop() {
             "xterm" "Simple terminal emulator for the X Window System" \
             "yakuake" "Drop-down terminal based on Konsole" \
             "zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)\
+            desktop_pkgs+=("$termemul")
 
             whiptail --title "Just to confirm..." --yesno "The main desktop packages you want to install are $desktoppkg, $displaymgr, and $termemul.\n\nIs that correct?"  0 0 3>&1 1>&2 2>&3
             if [[ $? -eq 0 ]]; then
