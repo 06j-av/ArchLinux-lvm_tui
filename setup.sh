@@ -50,7 +50,7 @@ start() {
     if [[ $? -eq 0 ]]; then
         useconfig=true
     else
-        whiptail --title "Arch Linux installer" --msgbox "These are the steps we will help you go through: \n\n1. Selecting your partitions \n2. Selecting a kernel\n3. Set up a user account\n4. Set up your root password\nConfigure your system\n6. Select a desktop environment" 0 5
+        whiptail --title "Arch Linux installer" --msgbox "These are the steps we will help you go through: \n\n1. Selecting your partitions \n2. Selecting a kernel\n3. Set up a user account\n4. Set up your root password\n5. Configure your system\n6. Select a desktop environment." 0 5
     fi
 
 }
