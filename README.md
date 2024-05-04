@@ -144,6 +144,7 @@ You'll need these variables in the config file:
    - This will be your desktop environment/window manager, terminal emulator, and display manager
    > [!TIP]
    > You *could* use this to install other packages such as shells, games, browsers, and other packages!
+
      ```
      $min_install # boolean true/false
      # This is an array of strings
