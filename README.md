@@ -155,7 +155,6 @@ And your configuration is all set! Just make sure you confirm that you have a co
      
 
 ## Next steps
-This can be seen in the `newinstaller/` directory on this repository.
 
 - ~~Support for configuration files to skip the whole menu-by-menu process~~
    - ~~For what I have in mind, it's basically just setting the variables yourself~~
