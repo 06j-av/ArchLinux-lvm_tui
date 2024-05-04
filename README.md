@@ -51,10 +51,8 @@ This is a **Terminal User Interface** variant of the [text-based installer](http
    - Once the installation is complete, reboot your system and remove the USB drive, and if everything went well, you can say "hello" to your new Arch Linux system.
   
 ## Creating a configuration file
-
-### IMPORTANT:
-   - As of 05.03.2024, for some reason when using a configuration file, the packages didn't install (at least for me). For now, you should probably go through the setup manually.
-
+   >[!WARNING]
+   > As of 05.03.2024, for some reason when using a configuration file, the packages didn't install (at least for me). For now, you should probably go through the setup manually.
 You can use a configuration file with the installer to speed up the setup process.
 
 When you're in the Arch ISO environment (or if you are going to copy your setup), create a file using your favorite text editor.
@@ -144,8 +142,8 @@ You'll need these variables in the config file:
      $swapspace # string
      ```
    - This will be your desktop environment/window manager, terminal emulator, and display manager
-   - You'll need to set `min_install` to **false** to install them
-   - You could potentially install other packages through this method.
+   > [!TIP]
+   > You *could* use this to install other packages such as shells, games, browsers, and other packages!
      ```
      $min_install # boolean true/false
      # This is an array of strings
