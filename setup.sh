@@ -58,7 +58,7 @@ start() {
 checkefi() {
     # Check if the ESP is a device file and a "EFI System" partition
     if [[ -b "$efipart" && "$(lsblk -no TYPE "$efipart")"  == "part" && "$(lsblk -no PARTTYPENAME "$efipart")" = "EFI System" ]]; then
-        echo "$efipart is a valid ESP."
+        echo "$efipart is a valid ESP." &> /dev/tty2
     else
         whiptail --title "Something went wrong" --msgbox "$efipart is not a valid EFI System Partition." 0 0
         exit 1
@@ -67,7 +67,7 @@ checkefi() {
 
 checkrootpart() {
     if [[ -b "$rootpart" && "$(lsblk -no TYPE "$rootpart")"  == "part" && "$(lsblk -no PARTTYPENAME "$rootpart")" = "Linux LVM" || "$(lsblk -no PARTTYPENAME "$rootpart")" = "Linux filesystem" ]]; then
-        echo "$rootpart is a valid ESP."
+        echo "$rootpart is a valid ESP."  &> /dev/tty2
     else
         whiptail --title "Something went wrong" --msgbox "$rootpart is not a valid root partition." 0 0
         exit 1
@@ -432,7 +432,6 @@ checkvars() {
 
 checkconfigfile() {
     whiptail --title "Just a moment..." --infobox "We're reviewing your config file..." 8 35
-    echo "We're reviewing your config file..."
     checkvars
     checkefi
     sleep 1
