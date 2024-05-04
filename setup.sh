@@ -6,7 +6,6 @@ start() {
 
     # Set the directory to the script's parent directory
     whiptail --title "Just a couple things first..." --infobox "Setting the directory..." 8 35
-    echo "Setting the directory..."
     script_dir="$(dirname "$0")"
     cd "$script_dir"
     dir=$(pwd)
@@ -14,7 +13,6 @@ start() {
 
     # Check for a sufficient internet connection
     whiptail --title "Just a couple things first..." --infobox "Checking your internet connection..." 8 35
-    echo "Checking your internet connection..."
     ping -c 5 archlinux.org &> /dev/null 2>&1
 
     # If ping wasn't successful, return a connection error
@@ -26,7 +24,6 @@ start() {
     # Check if the user is running UEFI firmware
     UEFI=false
     whiptail --title "Just a couple things first..." --infobox "Checking your firmware..." 8 35
-    echo "Checking your firmware..."
     if [ -d /sys/firmware/efi ]; then
         UEFI=true
     fi
@@ -38,7 +35,6 @@ start() {
 
     # Check if the user is running x64/amd64 hardware
     whiptail --title "Just a couple things first..." --infobox "Checking system architecture..." 8 35
-    echo "Checking system architecture..."
     if [[ "$(uname -m)" != "x86_64" ]]; then
         whiptail --title "Unsupported architecture" --msgbox "This installation script only supports the x86_64 architecture.\n\nYou cannot run the installer with the current system architecture." 2 15
         exit 1
@@ -345,7 +341,7 @@ desktop() {
         "lxde" "Install the LXDE desktop environment" \
         "lxqt" "Install the LXQt desktop environment" \
         "mate" "Install the MATE desktop environment" \
-        "plasma" "Install the KDE Plasma desktop environment" \
+        "plasma-meta" "Install the KDE Plasma desktop environment" \
         "xfce4" "Install the Xfce desktop environment" \
         "i3" "Install the i3 window manager" \
         "sway" "Install the Sway window manager" \
