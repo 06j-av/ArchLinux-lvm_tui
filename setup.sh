@@ -508,7 +508,7 @@ installarch() {
     if [[ $confirm -eq 0 ]]; then
         confirm=$(whiptail --title "Are you ready?" --nocancel --yesno "ARE YOU SURE?\n\nThere really is no going back." --defaultno --yes-button "I'm sure" --no-button "Never mind" 0 0 3>&1 1>&2 2>&3; echo $?)
         if [[ $confirm -eq 1 ]]; then
-            whiptail --title "Going back" --msgbox "Never mind then." 0 5
+            whiptail --title "Going back" --msgbox "Never mind then.\n\nGood bye!" 0 5
             exit 0
         else
             {
@@ -574,22 +574,6 @@ installarch() {
  	pacstrap_pkgs=("base" "$linuxkernel" "$linuxkernel-headers" "linux-firmware" "base-devel" "zip" "unzip" "$cpumake-ucode" "networkmanager" "neovim" "wpa_supplicant" "wireless_tools" "netctl" "dialog" "bluez" "bluez-utils" "ntfs-3g" "grub" "efibootmgr" "mtools" "os-prober" "man-db" "pipewire" "lib32-pipewire" "wireplumber" "pipewire-pulse" "pipewire-alsa" "pipewire-jack" "lib32-pipewire-jack")
 
  	if [[ "$gpupkg" != "mesa" ]]; then
- 		cat <<NVIDIAHOOK > $dir/nvidia.hook
-[Trigger]
-Operation=Install
-Operation=Upgrade
-Operation=Remove
-Type=Package
-Target=$gpupkg
-Target=$linuxkernel
-
-[Action]
-Description=Update NVIDIA module in initcpio
-Depends=mkinitcpio
-When=PostTransaction
-NeedsTargets
-Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
-NVIDIAHOOK
         pacstrap_pkgs+=("$gpupkg" "nvidia-utils" "lib32-nvidia-utils")
     else
         pacstrap_pkgs+=("mesa" "lib32-mesa")
@@ -632,11 +616,11 @@ NVIDIAHOOK
   	fi
 
   	whiptail --title "Installing Arch Linux..." --infobox "Configuring the system..." 8 35
- 	echo "$nameofhost" > /mnt/etc/hostname
-	echo -e "127.0.0.1	localhost\n127.0.1.1	$nameofhost" > /mnt/etc/hosts
+ 	echo "$host" > /mnt/etc/hostname
+	echo -e "127.0.0.1	localhost\n127.0.1.1	$host" > /mnt/etc/hosts
 	arch-chroot /mnt ln -sf /usr/share/zoneinfo/$timezone /etc/localtime &> /dev/tty2
 	arch-chroot /mnt hwclock --systohc &> /dev/tty2
-	sed -i 's/#$locale/$locale/' /mnt/etc/locale.gen
+	sed -i "s/#$locale UTF-8/$locale UTF-8/" /mnt/etc/locale.gen
 	arch-chroot /mnt locale-gen &> /dev/tty2
 	echo "LANG=$locale" > /mnt/etc/locale.conf
 	sed -i "/\[multilib\]/,/Include/"'s/^#//' /mnt/etc/pacman.conf
@@ -645,16 +629,9 @@ NVIDIAHOOK
 
     whiptail --title "Installing Arch Linux..." --infobox "Installing and configuring GRUB..." 8 35
     arch-chroot /mnt grub-install --target=x86_64-efi --bootloader-id=arch_grub --recheck &> /dev/tty2
-	if [ -d /boot/grub/locale ]; then
-		cp /mnt/usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /mnt/boot/grub/locale/en.mo
-		sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /mnt/etc/default/grub
-		arch-chroot /mnt grub-mkconfig --output=/boot/grub/grub.cfg &> /dev/tty2
-	else
-		mkdir /mnt/boot/grub/locale
-		cp /mnt/usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /mnt/boot/grub/locale/en.mo
-		sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /mnt/etc/default/grub
-		arch-chroot /mnt grub-mkconfig --output=/boot/grub/grub.cfg &> /dev/tty2
-	fi
+	cp /mnt/usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /mnt/boot/grub/locale/en.mo
+	sed -i 's/^#GRUB_DISABLE_OS_PROBER=false/GRUB_DISABLE_OS_PROBER="false"/' /mnt/etc/default/grub
+	arch-chroot /mnt grub-mkconfig --output=/boot/grub/grub.cfg &> /dev/tty2
 	sleep 1
 
   	whiptail --title "Installing Arch Linux..." --infobox "Configuring users and passwords..." 8 35
@@ -672,15 +649,31 @@ NVIDIAHOOK
 	whiptail --title "Installing Arch Linux..." --infobox "Enabling some systemd services..." 8 35
 	arch-chroot /mnt systemctl enable NetworkManager &> /dev/tty2
 	arch-chroot /mnt systemctl enable systemd-timesyncd &> /dev/tty2
-    if [[ "$min_install" = false ]]; then
+    if [[ "$min_install" = false && "$displaymgr" != "xorg-xinit" ]]; then
         arch-chroot /mnt systemctl enable $displaymgr &> /dev/tty2
     fi
 
     sleep 1
 
     if [[ "$gpupkg" != "mesa" ]]; then
+        whiptail --title "Installing Arch Linux..." --infobox "Configuring NVIDIA..." 8 35
         mkdir /mnt/etc/pacman.d/hooks
-		cp /mnt/install/nvidia.hook /mnt/etc/pacman.d/hooks/
+		cat <<NVIDIAHOOK > /mnt/etc/pacman.d/hooks/nvidia.hook
+[Trigger]
+Operation=Install
+Operation=Upgrade
+Operation=Remove
+Type=Package
+Target=$gpupkg
+Target=$linuxkernel
+
+[Action]
+Description=Update NVIDIA module in initcpio
+Depends=mkinitcpio
+When=PostTransaction
+NeedsTargets
+Exec=/bin/sh -c 'while read -r trg; do case $trg in linux*) exit 0; esac; done; /usr/bin/mkinitcpio -P'
+NVIDIAHOOK
 		sed -i 's/^GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet"/GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet nvidia_drm.modeset=1"/' /mnt/etc/default/grub
 		sed -i 's/^MODULES=()/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' /mnt/etc/mkinitcpio.conf
 		arch-chroot /mnt mkinitcpio -P &> /dev/tty2
@@ -696,7 +689,7 @@ NVIDIAHOOK
 	if [[ "$makeswap" = true ]]; then
 		whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
 		arch-chroot /mnt mkswap -U clear --size $swapspace --file /swapfile &> /dev/tty2
-		arch-chroot /mnt swapon /swapfile
+		arch-chroot /mnt swapon /swapfile &> /dev/tty2
 		echo '/swapfile none swap sw 0 0' | tee -a /mnt/etc/fstab
 		arch-chroot /mnt mount -a
 		arch-chroot /mnt swapon -a
