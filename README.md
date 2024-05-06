@@ -1,15 +1,13 @@
-# Arch Linux Installation with LVM Setup (Terminal User Interface)
+# Arch Linux auto install (with a terminal user interface!)
 
 This script automates the installation process of Arch Linux with Logical Volume Management (LVM) and uses a terminal user interface with `whiptail`. It is designed to make the installation steps more simpler for incoming Arch Linux users.
 
 This is a **Terminal User Interface** variant of the [text-based installer](https://github.com/06j-av/archlinux-installScript-LVM) that I likely will not even touch anymore because this one is much better than the other one (at least in my opinion).
 
 ## Some stuff you need to know
-- This script is **still in development**. It is only public so I can test this in a virtual machine :p
-- Don't run anything in the 'newinstaller/' directory in this repository. I just didn't make a branch for the next update to this installer and just slapped an **UNFINISHED** updated script in a folder.
+- This script is **in testing**, but it mostly works!
 - This script will only make __one__ user.
    - You'll have to add extra users yourself when you reboot into the installation.
-- This script will only have options for kernel (`linux` and `linux-lts`), and installs `alacritty` as the default terminal emulator.
 
 ## Things you'll need
 
@@ -22,7 +20,7 @@ This is a **Terminal User Interface** variant of the [text-based installer](http
 1. **Boot from USB**: Insert the bootable USB drive into your system, boot from it, and get yourself a great internet connection with Ethernet or a wireless connection with `iwctl`. (obviously)
 
 2. **Prepare Disk**:
-   - Ensure that you create an EFI System Partition (ESP) and a partition with the type set as "Linux LVM". You can confirm these actions using:
+   - Ensure that you create an EFI System Partition (ESP) and a partition with the type set as "Linux LVM" or "Linux filesystem" with `cfdisk /dev/[disk]`. You can confirm these actions using:
     ```
     lsblk -o NAME,PARTTYPENAME
     ```
@@ -31,7 +29,7 @@ This is a **Terminal User Interface** variant of the [text-based installer](http
 3. **Run some pacman commands**:
    - You'll need to run some pacman commands to ensure that the installation process goes smooth.
      ```
-     pacman -S git
+     pacman -Sy git
      ```
     
 4. **Clone this repository**:
@@ -53,7 +51,8 @@ This is a **Terminal User Interface** variant of the [text-based installer](http
    - Once the installation is complete, reboot your system and remove the USB drive, and if everything went well, you can say "hello" to your new Arch Linux system.
   
 ## Creating a configuration file
-
+   >[!WARNING]
+   > As of 05.03.2024, for some reason when using a configuration file, the packages didn't install (at least for me). For now, you should probably go through the setup manually.
 You can use a configuration file with the installer to speed up the setup process.
 
 When you're in the Arch ISO environment (or if you are going to copy your setup), create a file using your favorite text editor.
@@ -143,8 +142,9 @@ You'll need these variables in the config file:
      $swapspace # string
      ```
    - This will be your desktop environment/window manager, terminal emulator, and display manager
-   - You'll need to set `min_install` to **false** to install them
-   - You could potentially install other packages through this method.
+   > [!TIP]
+   > You *could* use this to install other packages such as shells, games, browsers, and other packages!
+
      ```
      $min_install # boolean true/false
      # This is an array of strings
@@ -158,10 +158,13 @@ And your configuration is all set! Just make sure you confirm that you have a co
 
 - ~~Support for configuration files to skip the whole menu-by-menu process~~
    - ~~For what I have in mind, it's basically just setting the variables yourself~~
+- One menu to access each step
 - Adding LVM + LUKS encryption disk layout
-- Install the AUR helper for access to the Arch User Repository
+- Options to install extra packages (shells, ~~browsers~~, games, etc.)
+- Install an AUR helper for access to the Arch User Repository
    - Likely `yay`
 - Add multiple users
+- **(This is a long shot)** Making a custom Arch ISO that runs this script
 
 `At this point this might just turn into the official archinstall program that's included in the live ISO but it has LVM setup support soooooo yay!!!!`
 
@@ -169,6 +172,7 @@ And your configuration is all set! Just make sure you confirm that you have a co
 
 - Ensure that you have a backup of your important data before proceeding with the installation, as it will format your chosen partitions.
 - If you want this program to fit *your* specific configurations, go ahead and modify the script according to your requirements!
+- I use Arch btw (but I ain't like those elitists)
 
 ## Support
 
