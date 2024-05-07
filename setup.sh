@@ -377,7 +377,7 @@ desktop() {
             "yakuake" "Drop-down terminal based on Konsole" \
             "zutty" "A high-end terminal for low-end systems" 3>&1 1>&2 2>&3)
             desktop_pkgs+=("$termemul")
-            browser=$(whiptail --title "Things to install / Terminal emulator" --menu --nocancel "Which terminal emulator do you want?" 25 78 12 \
+            browser=$(whiptail --title "Things to install / Browser" --menu --nocancel "Which browser do you want?" 25 78 12 \
             "skip" "Install a browser later" \
             "firefox" "Standalone web browser from mozilla.org" \
             "chromium" "THe open source project behind Google Chrome" \
