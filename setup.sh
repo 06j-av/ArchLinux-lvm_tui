@@ -690,7 +690,7 @@ NVIDIAHOOK
 		whiptail --title "Installing Arch Linux..." --infobox "Configuring swap space..." 8 35
 		arch-chroot /mnt mkswap -U clear --size $swapspace --file /swapfile &> /dev/tty2
 		arch-chroot /mnt swapon /swapfile &> /dev/tty2
-		echo '/swapfile none swap sw 0 0' | tee -a /mnt/etc/fstab
+		echo '/swapfile none swap sw 0 0' >> /mnt/etc/fstab
 		arch-chroot /mnt mount -a
 		arch-chroot /mnt swapon -a
 		sleep 1
