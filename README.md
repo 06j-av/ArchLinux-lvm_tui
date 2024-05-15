@@ -53,6 +53,7 @@ This is a **Terminal User Interface** variant of the [text-based installer](http
 ## Creating a configuration file
    >[!WARNING]
    > As of 05.03.2024, for some reason when using a configuration file, the packages didn't install (at least for me). For now, you should probably go through the setup manually.
+
 You can use a configuration file with the installer to speed up the setup process.
 
 When you're in the Arch ISO environment (or if you are going to copy your setup), create a file using your favorite text editor.
